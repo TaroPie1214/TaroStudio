@@ -1,6 +1,6 @@
 # TaroStudio
 
-A collection of all my plugins!
+A collection of all my JUCE plugins!
 
 JUCE tutorials coming soon...
 
