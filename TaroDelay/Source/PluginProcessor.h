@@ -56,6 +56,11 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    using APVTS = juce::AudioProcessorValueTreeState;
+    static APVTS::ParameterLayout createParameterLayout();
+        
+    APVTS apvts {*this, nullptr, "Parameters", createParameterLayout() };
+    
 private:
     void fillBuffer (juce::AudioBuffer<float>& buffer, int channel);
     void readFromBuffer(juce::AudioBuffer<float>& buffer, juce::AudioBuffer<float>& delayBuffer, int channel);
