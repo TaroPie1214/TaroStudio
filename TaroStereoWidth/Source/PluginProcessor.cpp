@@ -22,8 +22,6 @@ TaroStereoWidthAudioProcessor::TaroStereoWidthAudioProcessor()
                        )
 #endif
 {
-    gain = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("Gain"));
-    width = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("Width"));
 }
 
 TaroStereoWidthAudioProcessor::~TaroStereoWidthAudioProcessor()

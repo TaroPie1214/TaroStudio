@@ -62,8 +62,6 @@ public:
     APVTS apvts {*this, nullptr, "Parameters", createParameterLayout() };
 
 private:
-    juce::AudioParameterFloat* width { nullptr };
-    juce::AudioParameterFloat* gain { nullptr };
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TaroStereoWidthAudioProcessor)
 };
