@@ -9,6 +9,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Filter.h"
 #include "PluginProcessor.h"
 
 enum FFTOrder
@@ -258,6 +259,8 @@ juce::Timer
         shouldShowFFTAnalysis = enabled;
     }
 private:
+    FilterSettings filterSettings;
+    
     SimpleEQAudioProcessor& audioProcessor;
 
     bool shouldShowFFTAnalysis = true;
@@ -324,6 +327,7 @@ public:
     void resized() override;
 
 private:
+    
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     SimpleEQAudioProcessor& audioProcessor;

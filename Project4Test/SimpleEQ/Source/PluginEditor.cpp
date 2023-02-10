@@ -587,7 +587,7 @@ void ResponseCurveComponent::updateChain()
     monoChain.setBypassed<ChainPositions::Peak>(chainSettings.peakBypassed);
     monoChain.setBypassed<ChainPositions::HighCut>(chainSettings.highCutBypassed);
     
-    auto peakCoefficients = makePeakFilter(chainSettings, audioProcessor.getSampleRate());
+    auto peakCoefficients = filterSettings.makePeakFilter(chainSettings, audioProcessor.getSampleRate());
     updateCoefficients(monoChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
     
     auto lowCutCoefficients = makeLowCutFilter(chainSettings, audioProcessor.getSampleRate());
