@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="j5Gw7T" name="EQGUI" projectType="audioplug" useAppConfig="0"
+              addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
+              cppLanguageStandard="17">
+  <MAINGROUP id="L0K5bd" name="EQGUI">
+    <GROUP id="{4DFC4E20-1EE2-349D-691D-43686D467BF6}" name="Source">
+      <GROUP id="{49B18BF3-9153-DC32-09CB-3D9674D10730}" name="LookAndFeel">
+        <FILE id="REFDso" name="fontaudio.ttf" compile="0" resource="1" file="Source/LookAndFeel/fontaudio.ttf"/>
+        <FILE id="bezrv9" name="LookAndFeel.cpp" compile="1" resource="0" file="Source/LookAndFeel/LookAndFeel.cpp"/>
+        <FILE id="U8KOeR" name="LookAndFeel.h" compile="0" resource="0" file="Source/LookAndFeel/LookAndFeel.h"/>
+        <FILE id="c4NtAK" name="OpenSansCondensed-Bold.ttf" compile="0" resource="1"
+              file="Source/LookAndFeel/OpenSansCondensed-Bold.ttf"/>
+        <FILE id="wItoOw" name="OpenSansCondensed-Light.ttf" compile="0" resource="1"
+              file="Source/LookAndFeel/OpenSansCondensed-Light.ttf"/>
+        <FILE id="f41YcX" name="texture.png" compile="0" resource="1" file="Source/LookAndFeel/texture.png"/>
+      </GROUP>
+      <GROUP id="{558B8AD5-B411-DE09-C576-957656133E22}" name="Helpers">
+        <FILE id="TaeYIQ" name="ParameterHelpers.h" compile="0" resource="0"
+              file="Source/Helpers/ParameterHelpers.h"/>
+        <FILE id="vOIR9c" name="UnitConversions.h" compile="0" resource="0"
+              file="Source/Helpers/UnitConversions.h"/>
+      </GROUP>
+      <GROUP id="{0FE6403C-4341-66C7-4B05-6E095EA18C6E}" name="Components">
+        <FILE id="Ryl78Z" name="BandEditor.cpp" compile="1" resource="0" file="Source/Components/BandEditor.cpp"/>
+        <FILE id="OWsLfh" name="BandEditor.h" compile="0" resource="0" file="Source/Components/BandEditor.h"/>
+        <FILE id="RZwCyb" name="Frame.cpp" compile="1" resource="0" file="Source/Components/Frame.cpp"/>
+        <FILE id="ifgFiC" name="Frame.h" compile="0" resource="0" file="Source/Components/Frame.h"/>
+        <FILE id="Va0taA" name="FrequencyCurve.cpp" compile="1" resource="0"
+              file="Source/Components/FrequencyCurve.cpp"/>
+        <FILE id="OBNYCX" name="FrequencyCurve.h" compile="0" resource="0"
+              file="Source/Components/FrequencyCurve.h"/>
+        <FILE id="YUkMZb" name="Label.cpp" compile="1" resource="0" file="Source/Components/Label.cpp"/>
+        <FILE id="zKG1b4" name="Label.h" compile="0" resource="0" file="Source/Components/Label.h"/>
+        <FILE id="BXFD0s" name="SpectrumAnalyzer.cpp" compile="1" resource="0"
+              file="Source/Components/SpectrumAnalyzer.cpp"/>
+        <FILE id="Elt0dK" name="SpectrumAnalyzer.h" compile="0" resource="0"
+              file="Source/Components/SpectrumAnalyzer.h"/>
+        <FILE id="bhrOuU" name="TextEditor.cpp" compile="1" resource="0" file="Source/Components/TextEditor.cpp"/>
+        <FILE id="Cusvpr" name="TextEditor.h" compile="0" resource="0" file="Source/Components/TextEditor.h"/>
+        <FILE id="ihpUGD" name="XYPad.cpp" compile="1" resource="0" file="Source/Components/XYPad.cpp"/>
+        <FILE id="YzQDgL" name="XYPad.h" compile="0" resource="0" file="Source/Components/XYPad.h"/>
+      </GROUP>
+      <FILE id="yr1Qla" name="PluginProcessor.cpp" compile="1" resource="0"
+            file="Source/PluginProcessor.cpp"/>
+      <FILE id="vkTfOd" name="PluginProcessor.h" compile="0" resource="0"
+            file="Source/PluginProcessor.h"/>
+      <FILE id="M1oJWZ" name="PluginEditor.cpp" compile="1" resource="0"
+            file="Source/PluginEditor.cpp"/>
+      <FILE id="k4V9n2" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
+    </GROUP>
+  </MAINGROUP>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
+  <EXPORTFORMATS>
+    <XCODE_MAC targetFolder="Builds/MacOSX">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="EQGUI"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="EQGUI"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_audio_basics" path="../../../../../Users/taropie/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../../../../../Users/taropie/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../../../../../Users/taropie/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="../../../../../Users/taropie/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../../../../../Users/taropie/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="../../../../../Users/taropie/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_core" path="../../../../../Users/taropie/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../../../../../Users/taropie/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_events" path="../../../../../Users/taropie/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_graphics" path="../../../../../Users/taropie/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../../../../../Users/taropie/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../../../../../Users/taropie/Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_dsp" path="../../../../Users/taropie/Documents/JUCE/modules"/>
+      </MODULEPATHS>
+    </XCODE_MAC>
+  </EXPORTFORMATS>
+  <MODULES>
+    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_plugin_client" showAllCode="1" useLocalCopy="0"
+            useGlobalPath="1"/>
+    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_dsp" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+  </MODULES>
+</JUCERPROJECT>
