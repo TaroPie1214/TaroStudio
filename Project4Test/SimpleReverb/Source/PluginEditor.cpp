@@ -35,7 +35,7 @@ SimpleReverbAudioProcessorEditor::SimpleReverbAudioProcessorEditor (SimpleReverb
     dwLabel.setText ("Dry/Wet", juce::NotificationType::dontSendNotification);
     dwLabel.attachToComponent (&dwSlider, false);
     
-    freezeButton.setButtonText (juce::String (juce::CharPointer_UTF8 ("∞")));
+    // freezeButton.setButtonText (juce::String (juce::CharPointer_UTF8 ("∞")));
     freezeButton.setClickingTogglesState (true);
     freezeButton.setLookAndFeel (&customLookAndFeel);
     freezeButton.setColour (juce::TextButton::buttonColourId, juce::Colours::transparentWhite);
