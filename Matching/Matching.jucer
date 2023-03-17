@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="vs11UU" name="TaroMatching" projectType="audioplug" useAppConfig="0"
+              addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1">
+  <MAINGROUP id="asR5zm" name="TaroMatching">
+    <GROUP id="{EB0ADBCE-8BB2-452F-ADE0-29263B0665CA}" name="Source">
+      <GROUP id="{BF21619D-AB8D-A787-7ED0-77E78EBAFBB6}" name="component">
+        <FILE id="L8ZfjT" name="CustomLookAndFeel.cpp" compile="1" resource="0"
+              file="Source/component/CustomLookAndFeel.cpp"/>
+        <FILE id="sKK68T" name="CustomLookAndFeel.h" compile="0" resource="0"
+              file="Source/component/CustomLookAndFeel.h"/>
+        <FILE id="OOmTBe" name="NameLabel.h" compile="0" resource="0" file="Source/component/NameLabel.h"/>
+        <FILE id="OzqKsw" name="ResponseCurveComponent.cpp" compile="1" resource="0"
+              file="Source/component/ResponseCurveComponent.cpp"/>
+        <FILE id="qZfcL9" name="ResponseCurveComponent.h" compile="0" resource="0"
+              file="Source/component/ResponseCurveComponent.h"/>
+        <FILE id="rK8wWr" name="RotarySlider.cpp" compile="1" resource="0"
+              file="Source/component/RotarySlider.cpp"/>
+        <FILE id="F0RfKF" name="RotarySlider.h" compile="0" resource="0" file="Source/component/RotarySlider.h"/>
+      </GROUP>
+      <GROUP id="{C5EFA978-08DA-6E75-A48A-86479DA7D839}" name="dsp">
+        <FILE id="lqPgd0" name="Filter.cpp" compile="1" resource="0" file="Source/dsp/Filter.cpp"/>
+        <FILE id="RiRZc1" name="Filter.h" compile="0" resource="0" file="Source/dsp/Filter.h"/>
+        <FILE id="vACq3G" name="SingleChannelSampleFifo.cpp" compile="1" resource="0"
+              file="Source/dsp/SingleChannelSampleFifo.cpp"/>
+        <FILE id="RBrEGt" name="SingleChannelSampleFifo.h" compile="0" resource="0"
+              file="Source/dsp/SingleChannelSampleFifo.h"/>
+      </GROUP>
+      <FILE id="ihOEoo" name="PluginProcessor.cpp" compile="1" resource="0"
+            file="Source/PluginProcessor.cpp"/>
+      <FILE id="eylqjP" name="PluginProcessor.h" compile="0" resource="0"
+            file="Source/PluginProcessor.h"/>
+      <FILE id="bKDeXz" name="PluginEditor.cpp" compile="1" resource="0"
+            file="Source/PluginEditor.cpp"/>
+      <FILE id="Wc5jeF" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
+    </GROUP>
+  </MAINGROUP>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
+  <EXPORTFORMATS>
+    <VS2022 targetFolder="Builds/VisualStudio2022">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="Matching"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="Matching"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_audio_basics" path="C:/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="C:/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="C:/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="C:/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="C:/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="C:/JUCE/modules"/>
+        <MODULEPATH id="juce_core" path="C:/JUCE/modules"/>
+        <MODULEPATH id="juce_data_structures" path="C:/JUCE/modules"/>
+        <MODULEPATH id="juce_dsp" path="C:/JUCE/modules"/>
+        <MODULEPATH id="juce_events" path="C:/JUCE/modules"/>
+        <MODULEPATH id="juce_graphics" path="C:/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="C:/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="C:/JUCE/modules"/>
+      </MODULEPATHS>
+    </VS2022>
+  </EXPORTFORMATS>
+  <MODULES>
+    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_plugin_client" showAllCode="1" useLocalCopy="0"
+            useGlobalPath="1"/>
+    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_dsp" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+  </MODULES>
+</JUCERPROJECT>
