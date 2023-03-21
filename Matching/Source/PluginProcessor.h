@@ -61,6 +61,21 @@ public:
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     juce::AudioProcessorValueTreeState apvts{ *this, nullptr, "Parameters", createParameterLayout() };
 
+    enum
+    {
+        fftOrder = 11,
+        fftSize = 1 << fftOrder,
+    };
+    std::atomic<bool> nextFFTBlockReady{ false };
+    juce::AbstractFifo abstractFifoInput{ 1 };
+    juce::AudioBuffer<float> audioFifoInput;
+    juce::AbstractFifo abstractFifoOutput{ 1 };
+    juce::AudioBuffer<float> audioFifoOutput;
+    void setCopyToFifo(bool _copyToFifo);
+    std::atomic<bool> copyToFifo{ false };
+    void pushNextSampleToFifo(const juce::AudioBuffer<float>& buffer, int startChannel, int numChannels,
+        juce::AbstractFifo& absFifo, juce::AudioBuffer<float>& fifo);
+
     using BlockType = juce::AudioBuffer<float>;
     SingleChannelSampleFifo<BlockType> leftChannelFifo{ Channel::Left };
     SingleChannelSampleFifo<BlockType> rightChannelFifo{ Channel::Right };

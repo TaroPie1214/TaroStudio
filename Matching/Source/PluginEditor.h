@@ -10,9 +10,10 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
-#include "component/RotarySlider.h"
-#include "component/NameLabel.h"
-#include "component/ResponseCurveComponent.h"
+#include "Components/RotarySlider.h"
+#include "Components/NameLabel.h"
+#include "Components/ResponseCurveComponent.h"
+#include "Components/SpectrumAnalyzer.h"
 
 //==============================================================================
 /**
@@ -31,6 +32,8 @@ private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     MatchingAudioProcessor& audioProcessor;
+
+    // SpectrumAnalyzer analyzer;
 
     NameLabel sizeLabel,
         dampLabel,

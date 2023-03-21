@@ -150,6 +150,8 @@ void MatchingAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
+    //if (copyToFifo) pushNextSampleToFifo(buffer, 0, 2, abstractFifoInput, audioFifoInput);
+
     filterSettings.updateFilters(getChainSettings(apvts), getSampleRate(), leftChain, rightChain);
 
     // 以一个buffer创建一个block
@@ -176,6 +178,8 @@ void MatchingAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     //
     leftChannelFifo.update(buffer);
     rightChannelFifo.update(buffer);
+
+    //if (copyToFifo) pushNextSampleToFifo(buffer, 0, 2, abstractFifoOutput, audioFifoOutput);
 }
 
 //==============================================================================
@@ -204,6 +208,48 @@ void MatchingAudioProcessor::setStateInformation (const void* data, int sizeInBy
         apvts.replaceState(tree);
         filterSettings.updateFilters(getChainSettings(apvts), getSampleRate(), leftChain, rightChain);
     }
+}
+
+void MatchingAudioProcessor::setCopyToFifo(bool _copyToFifo)
+{
+    if (_copyToFifo)
+    {
+        abstractFifoInput.setTotalSize(int(getSampleRate()));
+        abstractFifoOutput.setTotalSize(int(getSampleRate()));
+
+        audioFifoInput.setSize(1, int(getSampleRate()));
+        audioFifoOutput.setSize(1, int(getSampleRate()));
+
+        abstractFifoInput.reset();
+        abstractFifoOutput.reset();
+
+        audioFifoInput.clear();
+        audioFifoOutput.clear();
+    }
+
+    copyToFifo.store(_copyToFifo);
+}
+
+void MatchingAudioProcessor::pushNextSampleToFifo(const juce::AudioBuffer<float>& buffer, int startChannel, int numChannels,
+    juce::AbstractFifo& absFifo, juce::AudioBuffer<float>& fifo)
+{
+    if (absFifo.getFreeSpace() < buffer.getNumSamples()) return;
+
+    int start1, block1, start2, block2;
+    absFifo.prepareToWrite(buffer.getNumSamples(), start1, block1, start2, block2);
+    fifo.copyFrom(0, start1, buffer.getReadPointer(startChannel), block1);
+
+    if (block2 > 0)
+        fifo.copyFrom(0, start2, buffer.getReadPointer(startChannel, block1), block2);
+
+    for (int channel = startChannel + 1; channel < startChannel + numChannels; ++channel)
+    {
+        if (block1 > 0) fifo.addFrom(0, start1, buffer.getReadPointer(channel), block1);
+        if (block2 > 0) fifo.addFrom(0, start2, buffer.getReadPointer(channel, block1), block2);
+    }
+
+    absFifo.finishedWrite(block1 + block2);
+    nextFFTBlockReady.store(true);
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout MatchingAudioProcessor::createParameterLayout()
