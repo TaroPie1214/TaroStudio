@@ -150,7 +150,7 @@ void MatchingAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    //if (copyToFifo) pushNextSampleToFifo(buffer, 0, 2, abstractFifoInput, audioFifoInput);
+    if (copyToFifo) pushNextSampleToFifo(buffer, 0, 2, abstractFifoInput, audioFifoInput);
 
     filterSettings.updateFilters(getChainSettings(apvts), getSampleRate(), leftChain, rightChain);
 
@@ -179,7 +179,7 @@ void MatchingAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     leftChannelFifo.update(buffer);
     rightChannelFifo.update(buffer);
 
-    //if (copyToFifo) pushNextSampleToFifo(buffer, 0, 2, abstractFifoOutput, audioFifoOutput);
+    if (copyToFifo) pushNextSampleToFifo(buffer, 0, 2, abstractFifoOutput, audioFifoOutput);
 }
 
 //==============================================================================

@@ -12,7 +12,7 @@
 //==============================================================================
 MatchingAudioProcessorEditor::MatchingAudioProcessorEditor (MatchingAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p),
-    //analyzer(audioProcessor),
+    analyzer(audioProcessor),
     responseCurveComponent(audioProcessor),
     peakFreqSliderAttachment(audioProcessor.apvts, "Peak Freq", peakFreqSlider),
     peakGainSliderAttachment(audioProcessor.apvts, "Peak Gain", peakGainSlider),
@@ -27,7 +27,10 @@ MatchingAudioProcessorEditor::MatchingAudioProcessorEditor (MatchingAudioProcess
         addAndMakeVisible(comp);
     }
 
+    p.setCopyToFifo(true);
+
     setSize(800, 500);
+
 }
 
 MatchingAudioProcessorEditor::~MatchingAudioProcessorEditor()
@@ -109,7 +112,8 @@ void MatchingAudioProcessorEditor::resized()
     float hRatio = 75.f / 100.f; //JUCE_LIVE_CONSTANT(25) / 100.f;
     auto responseArea = bounds.removeFromTop(bounds.getHeight() * hRatio); //change from 0.33 to 0.25 because I needed peak hz text to not overlap the slider thumb
 
-    //analyzer.setBounds(responseArea);
+    analyzer.setBounds(responseArea);
+    // responseCurveComponent.setBounds(responseArea);
 
     bounds.removeFromTop(5);
 
@@ -143,7 +147,7 @@ std::vector<juce::Component*> MatchingAudioProcessorEditor::getComps()
         &lowCutSlopeSlider,
         &highCutSlopeSlider,
         &responseCurveComponent,
-        //&analyzer
+        &analyzer
 
         /*&lowcutBypassButton,
         &peakBypassButton,

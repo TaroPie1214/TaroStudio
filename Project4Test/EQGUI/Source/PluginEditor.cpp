@@ -11,7 +11,7 @@ EqAudioProcessorEditor::EqAudioProcessorEditor (EqAudioProcessor& p, juce::Audio
       tree {vts},
       background {juce::ImageCache::getFromMemory (BinaryData::texture_png, BinaryData::texture_pngSize)},
       frame {defaultWidth * 2, defaultHeight * 2},
-      //analyzer {processor},
+      analyzer {processor},
       frequencyCurve {p},
       xyPad
       {{
@@ -36,7 +36,7 @@ EqAudioProcessorEditor::EqAudioProcessorEditor (EqAudioProcessor& p, juce::Audio
     outputGain.setTextBoxStyle (juce::Slider::TextBoxLeft, false, 62, 22);
 
     addAndMakeVisible (frame);
-        //frame.addAndMakeVisible (analyzer);
+        frame.addAndMakeVisible (analyzer);
         frame.addAndMakeVisible (frequencyCurve);
         frame.addAndMakeVisible (xyPad);
     addAndMakeVisible (band1);
@@ -92,7 +92,7 @@ void EqAudioProcessorEditor::resized()
                                .reduced (juce::roundToInt ((bounds.getWidth() - bandsWidth) * 0.5f), 1));
 
     frame.setBounds (bounds);
-        //analyzer.setBounds (bounds);
+        analyzer.setBounds (bounds);
         frequencyCurve.setBounds (bounds);
         xyPad.setBounds (bounds);
 }

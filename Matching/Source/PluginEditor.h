@@ -33,7 +33,7 @@ private:
     // access the processor object that created it.
     MatchingAudioProcessor& audioProcessor;
 
-    // SpectrumAnalyzer analyzer;
+    SpectrumAnalyzer analyzer;
 
     NameLabel sizeLabel,
         dampLabel,
