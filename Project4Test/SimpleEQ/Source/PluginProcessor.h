@@ -160,21 +160,6 @@ private:
     }
 };
 
-//// 声明函数getChainSettings，用于在调用时从apvts中获取所有参数
-//ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
-//
-// 定义滤波器
-using Filter = juce::dsp::IIR::Filter<float>;
-using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
-using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
-//
-//
-//
-//using Coefficients = Filter::CoefficientsPtr;
-//void updateCoefficients(Coefficients& old, const Coefficients& replacements);
-//
-//Coefficients makePeakFilter(const ChainSettings& chainSettings, double sampleRate);
-
 //==============================================================================
 /**
 */
@@ -227,13 +212,6 @@ public:
 private:
     // 初始化两个声道的Chain
     MonoChain leftChain, rightChain;
-    
-//    void updatePeakFilter(const ChainSettings& chainSettings);
-//
-//    void updateLowCutFilters(const ChainSettings& chainSettings);
-//    void updateHighCutFilters(const ChainSettings& chainSettings);
-//
-//    void updateFilters();
     
     juce::dsp::Oscillator<float> osc;
     
