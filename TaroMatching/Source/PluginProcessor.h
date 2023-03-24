@@ -61,9 +61,9 @@ public:
     enum
     {
         fftOrder = 11,
-        fftSize = 1 << fftOrder,
+        fftSize = 1 << fftOrder, // 2^11 = 2048
     };
-    std::atomic<bool> nextFFTBlockReady{ false };
+    std::atomic<bool> nextFFTBlockReady{ false }; // atomic类型提供了原子操作的基本类型，可以保证多线程环境下的数据同步和互斥访问
     juce::AbstractFifo abstractFifoInput{ 1 };
     juce::AudioBuffer<float> audioFifoInput;
     juce::AbstractFifo abstractFifoOutput{ 1 };

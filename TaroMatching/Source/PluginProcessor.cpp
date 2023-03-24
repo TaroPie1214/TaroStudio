@@ -96,7 +96,7 @@ void TaroMatchingAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
     juce::dsp::ProcessSpec spec;
 
     spec.maximumBlockSize = samplesPerBlock;
-    spec.numChannels = 1;
+    spec.numChannels = 2;
     spec.sampleRate = sampleRate;
 
     filters.prepare(spec);
