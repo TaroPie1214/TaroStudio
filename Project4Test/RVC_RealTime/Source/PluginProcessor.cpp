@@ -153,23 +153,17 @@ void RVC_RealTimeAudioProcessor::readWav()
 
 void RVC_RealTimeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    if (firstProcess == true)
-    {
-        /*const char* wavData = BinaryData::dry_short_cut_wav;
-        int wavSize = BinaryData::dry_short_cut_wavSize;
-        juce::MemoryBlock wavBlock(wavData, wavSize);
+    //if (firstProcess == true)
+    //{
+        int numSamples = buffer.getNumSamples();
 
-        juce::AudioBuffer<float> currentAudioBuffer;*/ // 假设已经有一个AudioBuffer对象
-        readWav();
-        const int numSamples = audioBuffer.getNumSamples();
-        
         // 获取AudioBuffer数据指针数组
-        const float* data = audioBuffer.getReadPointer(0);
+        const float* data = buffer.getReadPointer(0);
 
         juce::MemoryBlock memoryBlock(data, numSamples * sizeof(float));
 
-        int bufferSize = 512; // 你的bufferSize值
-        int sampleRate = 48000; // 你的sampleRate值
+        int bufferSize = buffer.getNumSamples(); // 你的bufferSize值
+        int sampleRate = getSampleRate(); // 你的sampleRate值
 
         // 将bufferSize和sampleRate转换为字节序列
         juce::MemoryBlock bufferSizeBlock(sizeof(bufferSize));
@@ -183,7 +177,7 @@ void RVC_RealTimeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         memoryBlock.append(sampleRateBlock.getData(), sampleRateBlock.getSize());
 
         auto url = juce::URL("http://127.0.0.1:8080/voiceChangeModel")
-                   .withPOSTData(memoryBlock);
+            .withPOSTData(memoryBlock);
 
         std::unique_ptr<juce::InputStream> response = url.createInputStream(juce::URL::InputStreamOptions((juce::URL::ParameterHandling::inPostData)));
 
@@ -192,98 +186,26 @@ void RVC_RealTimeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             juce::MemoryBlock responseBlock;
             response->readIntoMemoryBlock(responseBlock);
 
-            // 在这里对responseBlock进行处理，例如保存为.wav文件
-            // 你可以使用juce::FileOutputStream写入到磁盘上的文件
-            juce::FileOutputStream outputStream(juce::String("E:\\miao.wav"));
-            outputStream.write(responseBlock.getData(), responseBlock.getSize());
+            /* juce::AudioBuffer<float> resultBuffer(1, bufferSize);
+             resultBuffer.clear();*/
+
+            responseBlock.removeSection(0, 44);
+            DBG(responseBlock.getSize());
+
+            //float* audioData = buffer.getWritePointer(0); // 获取写入指针
+            //const float* binaryFloatData = reinterpret_cast<const float*>(responseBlock.getData()); // 获取二进制数据的float指针
+            //int binaryDataSize = responseBlock.getSize() / sizeof(float); // 计算二进制数据的大小
+            //for (int i = 0; i < buffer.getNumSamples(); ++i) {
+            //    if (i < binaryDataSize) {
+            //        audioData[i] = binaryFloatData[i]; // 将二进制数据复制到AudioBuffer中
+            //    }
+            //    else {
+            //        audioData[i] = 0.0f; // 如果二进制数据不足，将剩余位置填充为0
+            //    }
+            //}
         }
-
-        ////int sampleRate = getSampleRate();
-        ////const float* leftChannelData = buffer.getReadPointer(0);
-        ////// ½«buffer×ª»»Îª×Ö½ÚÊý×é
-        ////const int numSamples = buffer.getNumSamples();
-        ////const int numChannels = buffer.getNumChannels();
-        ////const int monoBufferSize = numSamples;
-        //int sampleRate = 48000;
-        //int monoBufferSize = audioBuffer.getNumSamples();
-        //std::vector<uint8_t> audioData(audioBuffer.getNumSamples() * sizeof(float));
-        //memcpy(audioData.data(), audioBuffer.getReadPointer(0), audioBuffer.getNumSamples() * sizeof(float));
-
-        //// 创建并连接到服务器
-        //juce::StreamingSocket socket;
-        //if (socket.connect("127.0.0.1", 8080))
-        //{
-        //    // 构建 form-data 数据
-        //    juce::MemoryBlock formBoundaryData;
-        //    formBoundaryData.append("--boundary", 10);
-        //    formBoundaryData.append("\r\n", 2);
-        //    formBoundaryData.append("Content-Disposition: form-data; name=\"sample\"; filename=\"audio.wav\"\r\n", 70);
-        //    formBoundaryData.append("Content-Type: audio/wav\r\n", 25);
-        //    formBoundaryData.append("Content-Length: ", 16);
-        //    formBoundaryData.append("\r\n", 2);
-        //    formBoundaryData.append(audioData.data(), audioData.size());
-        //    formBoundaryData.append("\r\n", 2);
-        //    formBoundaryData.append("--boundary", 10);
-        //    formBoundaryData.append("\r\n", 2);
-        //    formBoundaryData.append("Content-Disposition: form-data; name=\"sampleRate\"\r\n", 47);
-        //    formBoundaryData.append("\r\n", 2);
-        //    formBoundaryData.append(juce::String(sampleRate).toRawUTF8(), juce::String(sampleRate).length());
-        //    formBoundaryData.append("\r\n", 2);
-        //    formBoundaryData.append("--boundary", 10);
-        //    formBoundaryData.append("Content-Disposition: form-data; name=\"bufferSize\"\r\n", 49);
-        //    formBoundaryData.append("\r\n", 2);
-        //    formBoundaryData.append(juce::String(monoBufferSize).toRawUTF8(), juce::String(monoBufferSize).length());
-        //    formBoundaryData.append("\r\n", 2);
-        //    formBoundaryData.append("--boundary", 10);
-        //    formBoundaryData.append("--\r\n", 4);
-
-        //    // 发送 form-data 到服务器
-        //    const juce::String postRequest = "POST /voiceChangeModel HTTP/1.1\r\n"
-        //        "Host: 127.0.0.1:8080\r\n"
-        //        "Content-Type: multipart/form-data; boundary=boundary\r\n"
-        //        "Content-Length: " + juce::String(formBoundaryData.getSize()) + "\r\n"
-        //        "\r\n";
-        //    socket.write(postRequest.toRawUTF8(), postRequest.length());
-        //    socket.write(formBoundaryData.getData(), formBoundaryData.getSize());
-
-        //    // 接收服务器返回的数据
-        //    juce::String response;
-        //    while (socket.isConnected() && socket.waitUntilReady(true, 500))
-        //    {
-        //        char receivedData[4096];
-        //        const int bytesRead = socket.read(receivedData, sizeof(receivedData) - 1, false);
-        //        if (bytesRead <= 0)
-        //            break;
-
-        //        receivedData[bytesRead] = '\0';
-        //        response += receivedData;
-        //    }
-
-        //    // 解析服务器返回的数据并用其替换当前buffer
-        //    // 这里根据你的具体需求进行解析和处理
-        //    // 例如，如果返回的是替换后的音频数据，你可以将其复制回buffer
-        //    juce::AudioBuffer<float> resultBuffer(1, 480000);
-        //    if (resultBuffer.getNumSamples() == monoBufferSize) {
-        //        for (int channel = 0; channel < 1; ++channel) {
-        //            float* writePointer = resultBuffer.getWritePointer(channel);
-        //            const float* responsePointer = reinterpret_cast<const float*>(response.toRawUTF8());
-        //            memcpy(writePointer, responsePointer, monoBufferSize * sizeof(float));
-        //            responsePointer += monoBufferSize;
-        //        }
-        //    }
-        //    /*const int responseSize = response.length();
-        //    if (responseSize == monoBufferSize) {
-        //        for (int channel = 0; channel < 1; ++channel) {
-        //            float* writePointer = buffer.getWritePointer(channel);
-        //            const float* responsePointer = reinterpret_cast<const float*>(response.toRawUTF8());
-        //            memcpy(writePointer, responsePointer, monoBufferSize * sizeof(float));
-        //            responsePointer += monoBufferSize;
-        //        }
-        //    }*/
-        //}
-    }
-    firstProcess = false;
-    
+    //}
+    //firstProcess = false;
 }
 
 //==============================================================================
