@@ -13,7 +13,7 @@
 
 SpectrumAnalyzer::SpectrumAnalyzer(TaroMatchingAudioProcessor& TaroMatchingProcessor) : processor{ TaroMatchingProcessor }
 {
-    // 如果能够保证不会在边界之外绘制任何内容时，可以使用 setPaintingIsUnclipped(true) 来提高性能
+    // 脠莽鹿没脛脺鹿禄卤拢脰陇虏禄禄谩脭脷卤脽陆莽脰庐脥芒禄忙脰脝脠脦潞脦脛脷脠脻脢卤拢卢驴脡脪脭脢鹿脫脙 setPaintingIsUnclipped(true) 脌麓脤谩赂脽脨脭脛脺
     setPaintingIsUnclipped(true);
 
     avgInput.clear();
@@ -30,7 +30,7 @@ SpectrumAnalyzer::SpectrumAnalyzer(TaroMatchingAudioProcessor& TaroMatchingProce
     startTimerHz(30);
 }
 
-// 计算给定频域数据缓冲区中指定频点的幅度级别，并将其转换为分贝值
+// 录脝脣茫赂酶露篓脝碌脫貌脢媒戮脻禄潞鲁氓脟酶脰脨脰赂露篓脝碌碌茫碌脛路霉露脠录露卤冒拢卢虏垄陆芦脝盲脳陋禄禄脦陋路脰卤麓脰碌
 float SpectrumAnalyzer::getFftPointLevel(const float* buffer, const fftPoint& point)
 {
     float level = 0.0f;
@@ -45,24 +45,24 @@ float SpectrumAnalyzer::getFftPointLevel(const float* buffer, const fftPoint& po
 
 void SpectrumAnalyzer::paint(juce::Graphics& g)
 {
-    // 获取当前控件的大小，并计算出宽度和高度
+    // 禄帽脠隆碌卤脟掳驴脴录镁碌脛麓贸脨隆拢卢虏垄录脝脣茫鲁枚驴铆露脠潞脥赂脽露脠
     const auto bounds = getLocalBounds().toFloat();
     const auto width = bounds.getWidth();
     const auto height = bounds.getHeight();
 
-    // 获取平均输入缓冲区和平均输出缓冲区的数据，并对数据进行处理
+    // 禄帽脠隆脝陆戮霉脢盲脠毛禄潞鲁氓脟酶潞脥脝陆戮霉脢盲鲁枚禄潞鲁氓脟酶碌脛脢媒戮脻拢卢虏垄露脭脢媒戮脻陆酶脨脨麓娄脌铆
     const auto* fftDataInput = avgInput.getReadPointer(0);
     const auto* fftDataOutput = avgOutput.getReadPointer(0);
 
-    // 通过juce::ScopedLock对象对共享资源进行加锁，避免多线程同时访问共享资源
+    // 脥篓鹿媒juce::ScopedLock露脭脧贸露脭鹿虏脧铆脳脢脭麓陆酶脨脨录脫脣酶拢卢卤脺脙芒露脿脧脽鲁脤脥卢脢卤路脙脦脢鹿虏脧铆脳脢脭麓
     juce::ScopedLock lockedForReading(pathCreationLock);
 
-    // 清空路径对象inP和outP
+    // 脟氓驴脮脗路戮露露脭脧贸inP潞脥outP
     inP.clear();
     outP.clear();
 
-    // 对FFT点进行处理，将处理后的数据添加到路径对象inP和outP中
-    // 对于每个频点，计算其幅度级别的分贝值，并将其转换为y轴坐标
+    // 露脭FFT碌茫陆酶脨脨麓娄脌铆拢卢陆芦麓娄脌铆潞贸碌脛脢媒戮脻脤铆录脫碌陆脗路戮露露脭脧贸inP潞脥outP脰脨
+    // 露脭脫脷脙驴赂枚脝碌碌茫拢卢录脝脣茫脝盲路霉露脠录露卤冒碌脛路脰卤麓脰碌拢卢虏垄陆芦脝盲脳陋禄禄脦陋y脰谩脳酶卤锚
     {
         fftPoint& point = fftPoints[0];
         float y = juce::jmap(getFftPointLevel(fftDataInput, point), mindB, maxdB, height, 0.0f) + 0.5f;
@@ -94,96 +94,96 @@ void SpectrumAnalyzer::paint(juce::Graphics& g)
     inP.lineTo(0.0f, height);
     inP.closeSubPath();
 
-    // 绘制路径对象outP，并填充颜色
+    // 禄忙脰脝脗路戮露露脭脧贸outP拢卢虏垄脤卯鲁盲脩脮脡芦
     g.setColour(juce::Colour{ 0x6b9acd32 });
     g.fillPath(outP);
 
-    // 绘制路径对象inP，并填充颜色
+    // 禄忙脰脝脗路戮露露脭脧贸inP拢卢虏垄脤卯鲁盲脩脮脡芦
     g.setColour(baseColor.brighter(0.18f).withAlpha(juce::uint8(182)));
     g.fillPath(inP);
 }
 
-// 根据控件大小和FFT大小计算频点的位置，并根据频点的数量更新fftPointsSize
+// 赂霉戮脻驴脴录镁麓贸脨隆潞脥FFT麓贸脨隆录脝脣茫脝碌碌茫碌脛脦禄脰脙拢卢虏垄赂霉戮脻脝碌碌茫碌脛脢媒脕驴赂眉脨脗fftPointsSize
 void SpectrumAnalyzer::resized()
 {
-    // 获取控件的边界（bounds），并根据其宽度（getWidth）计算每个频点的x轴坐标的宽度因子（widthFactor）
+    // 禄帽脠隆驴脴录镁碌脛卤脽陆莽拢篓bounds拢漏拢卢虏垄赂霉戮脻脝盲驴铆露脠拢篓getWidth拢漏录脝脣茫脙驴赂枚脝碌碌茫碌脛x脰谩脳酶卤锚碌脛驴铆露脠脪貌脳脫拢篓widthFactor拢漏
     const auto bounds = getLocalBounds();
     auto widthFactor = bounds.getWidth() / 10.0f;
-    // 获取采样率（sampleRate）和FFT大小（fftSize）
+    // 禄帽脠隆虏脡脩霉脗脢拢篓sampleRate拢漏潞脥FFT麓贸脨隆拢篓fftSize拢漏
     auto sampleRate = float(processor.getSampleRate());
     auto fftSize = fftInput.getSize();
     
-    // 初始化fftPointsSize为0，并将第一个频点的第一个bin的索引设置为0
+    // 鲁玫脢录禄炉fftPointsSize脦陋0拢卢虏垄陆芦碌脷脪禄赂枚脝碌碌茫碌脛碌脷脪禄赂枚bin碌脛脣梅脪媒脡猫脰脙脦陋0
     fftPointsSize = 0;
     int lastX = 0;
     fftPoints[0].firstBinIndex = 0;
 
-    // 通过循环计算每个频点的位置
+    // 脥篓鹿媒脩颅禄路录脝脣茫脙驴赂枚脝碌碌茫碌脛脦禄脰脙
     int i = 0;
     while (i < processor.fftSize)
     {
-        // 首先获取当前频点（fftPoint）
+        // 脢脳脧脠禄帽脠隆碌卤脟掳脝碌碌茫拢篓fftPoint拢漏
         fftPoint& point = fftPoints[fftPointsSize];
-        // 并将其第一个bin的索引设置为i
+        // 虏垄陆芦脝盲碌脷脪禄赂枚bin碌脛脣梅脪媒脡猫脰脙脦陋i
         point.firstBinIndex = i;
-        // 将上一个频点的x轴坐标设置为该频点的x轴坐标（lastX）
+        // 陆芦脡脧脪禄赂枚脝碌碌茫碌脛x脰谩脳酶卤锚脡猫脰脙脦陋赂脙脝碌碌茫碌脛x脰谩脳酶卤锚拢篓lastX拢漏
         point.x = lastX;
 
-        // 在循环中计算下一个频点的x轴坐标（x）
+        // 脭脷脩颅禄路脰脨录脝脣茫脧脗脪禄赂枚脝碌碌茫碌脛x脰谩脳酶卤锚拢篓x拢漏
         int x = lastX;
         while ((x <= lastX) && (i < processor.fftSize))
         {
             ++i;
-            // 在计算下一个频点的x轴坐标时，首先计算该频点的频率所对应的位置（pos）
+            // 脭脷录脝脣茫脧脗脪禄赂枚脝碌碌茫碌脛x脰谩脳酶卤锚脢卤拢卢脢脳脧脠录脝脣茫赂脙脝碌碌茫碌脛脝碌脗脢脣霉露脭脫娄碌脛脦禄脰脙拢篓pos拢漏
             auto pos = std::log(((sampleRate * i) / fftSize) / 20.f) / std::log(2.0f);
-            // 然后将其转换为x轴坐标
-            // 如果x轴坐标小于等于上一个频点的x轴坐标，则将其视为相同的频点
-            // 如果x轴坐标大于上一个频点的x轴坐标，则将其视为新的频点
+            // 脠禄潞贸陆芦脝盲脳陋禄禄脦陋x脰谩脳酶卤锚
+            // 脠莽鹿没x脰谩脳酶卤锚脨隆脫脷碌脠脫脷脡脧脪禄赂枚脝碌碌茫碌脛x脰谩脳酶卤锚拢卢脭貌陆芦脝盲脢脫脦陋脧脿脥卢碌脛脝碌碌茫
+            // 脠莽鹿没x脰谩脳酶卤锚麓贸脫脷脡脧脪禄赂枚脝碌碌茫碌脛x脰谩脳酶卤锚拢卢脭貌陆芦脝盲脢脫脦陋脨脗碌脛脝碌碌茫
             x = juce::roundToInt((pos > 0.0f) ? (widthFactor * pos) + 0.5f : 0);
         }
 
-        // 计算该频点的最后一个bin的索引（i-1）
+        // 录脝脣茫赂脙脝碌碌茫碌脛脳卯潞贸脪禄赂枚bin碌脛脣梅脪媒拢篓i-1拢漏
         point.lastBinIndex = i - 1;
 
-        // 将该频点的数量（fftPointsSize）加1
+        // 陆芦赂脙脝碌碌茫碌脛脢媒脕驴拢篓fftPointsSize拢漏录脫1
         ++fftPointsSize;
-        // 将上一个频点的x轴坐标更新为当前频点的x轴坐标
+        // 陆芦脡脧脪禄赂枚脝碌碌茫碌脛x脰谩脳酶卤锚赂眉脨脗脦陋碌卤脟掳脝碌碌茫碌脛x脰谩脳酶卤锚
         lastX = x;
     }
 }
 
-// 这段代码是用于频谱分析的，主要是对音频数据进行FFT变换，以获取频谱信息
+// 脮芒露脦麓煤脗毛脢脟脫脙脫脷脝碌脝脳路脰脦枚碌脛拢卢脰梅脪陋脢脟露脭脪么脝碌脢媒戮脻陆酶脨脨FFT卤盲禄禄拢卢脪脭禄帽脠隆脝碌脝脳脨脜脧垄
 void SpectrumAnalyzer::drawNextFrame()
 {
-    // 首先通过while循环从缓冲区中读取音频数据，直到缓冲区中可用的数据量大于等于FFT输入缓冲区的大小为止
+    // 脢脳脧脠脥篓鹿媒while脩颅禄路麓脫禄潞鲁氓脟酶脰脨露脕脠隆脪么脝碌脢媒戮脻拢卢脰卤碌陆禄潞鲁氓脟酶脰脨驴脡脫脙碌脛脢媒戮脻脕驴麓贸脫脷碌脠脫脷FFT脢盲脠毛禄潞鲁氓脟酶碌脛麓贸脨隆脦陋脰鹿
     while (processor.abstractFifoInput.getNumReady() >= fftInput.getSize())
     {
-        // 接着清空FFT输入缓冲区，
+        // 陆脫脳脜脟氓驴脮FFT脢盲脠毛禄潞鲁氓脟酶拢卢
         fftBufferInput.clear();
 
-        // 并通过prepareToRead()方法获取从FIFO输入缓冲区中读取数据的起始位置和块大小
+        // 虏垄脥篓鹿媒prepareToRead()路陆路篓禄帽脠隆麓脫FIFO脢盲脠毛禄潞鲁氓脟酶脰脨露脕脠隆脢媒戮脻碌脛脝冒脢录脦禄脰脙潞脥驴茅麓贸脨隆
         int start1, block1, start2, block2;
         processor.abstractFifoInput.prepareToRead(fftInput.getSize(), start1, block1, start2, block2);
 
-        // 将FIFO输入缓冲区中的数据复制到FFT输入缓冲区中
+        // 陆芦FIFO脢盲脠毛禄潞鲁氓脟酶脰脨碌脛脢媒戮脻赂麓脰脝碌陆FFT脢盲脠毛禄潞鲁氓脟酶脰脨
         if (block1 > 0) fftBufferInput.copyFrom(0, 0, processor.audioFifoInput.getReadPointer(0, start1), block1);
         if (block2 > 0) fftBufferInput.copyFrom(0, block1, processor.audioFifoInput.getReadPointer(0, start2), block2);
         processor.abstractFifoInput.finishedRead((block1 + block2) / 2);
 
-        // 通过Hann窗口函数对数据进行加权处理
+        // 脥篓鹿媒Hann麓掳驴脷潞炉脢媒露脭脢媒戮脻陆酶脨脨录脫脠篓麓娄脌铆
         hannWindow.multiplyWithWindowingTable(fftBufferInput.getWritePointer(0), size_t(fftInput.getSize()));
         fftInput.performFrequencyOnlyForwardTransform(fftBufferInput.getWritePointer(0));
-        // 对FFT输入缓冲区中的数据进行FFT变换，并将结果保存在FFT输出缓冲区中
+        // 露脭FFT脢盲脠毛禄潞鲁氓脟酶脰脨碌脛脢媒戮脻陆酶脨脨FFT卤盲禄禄拢卢虏垄陆芦陆谩鹿没卤拢麓忙脭脷FFT脢盲鲁枚禄潞鲁氓脟酶脰脨
         juce::ScopedLock lockedForWriting(pathCreationLock);
         avgInput.addFrom(0, 0, avgInput.getReadPointer(avgInputPtr), avgInput.getNumSamples(), -1.0f);
         avgInput.copyFrom(avgInputPtr, 0, fftBufferInput.getReadPointer(0), avgInput.getNumSamples(), 1.0f / (avgInput.getNumSamples() * (avgInput.getNumChannels() - 1)));
         avgInput.addFrom(0, 0, avgInput.getReadPointer(avgInputPtr), avgInput.getNumSamples());
 
-        // 对FFT输出缓冲区中的数据进行平均化处理，将结果保存在平均输入缓冲区中
+        // 露脭FFT脢盲鲁枚禄潞鲁氓脟酶脰脨碌脛脢媒戮脻陆酶脨脨脝陆戮霉禄炉麓娄脌铆拢卢陆芦陆谩鹿没卤拢麓忙脭脷脝陆戮霉脢盲脠毛禄潞鲁氓脟酶脰脨
         if (++avgInputPtr == avgInput.getNumChannels()) avgInputPtr = 1;
 
-        // 重复上述步骤，直到缓冲区中可用的数据量不足以填满FFT输入缓冲区为止
-        // 需要说明的是，代码中的juce::ScopedLock lockedForWriting(pathCreationLock)用于加锁，避免多线程同时访问共享资源。其中的pathCreationLock是一个互斥锁对象，用于保护共享资源的访问
+        // 脰脴赂麓脡脧脢枚虏陆脰猫拢卢脰卤碌陆禄潞鲁氓脟酶脰脨驴脡脫脙碌脛脢媒戮脻脕驴虏禄脳茫脪脭脤卯脗煤FFT脢盲脠毛禄潞鲁氓脟酶脦陋脰鹿
+        // 脨猫脪陋脣碌脙梅碌脛脢脟拢卢麓煤脗毛脰脨碌脛juce::ScopedLock lockedForWriting(pathCreationLock)脫脙脫脷录脫脣酶拢卢卤脺脙芒露脿脧脽鲁脤脥卢脢卤路脙脦脢鹿虏脧铆脳脢脭麓隆拢脝盲脰脨碌脛pathCreationLock脢脟脪禄赂枚禄楼鲁芒脣酶露脭脧贸拢卢脫脙脫脷卤拢禄陇鹿虏脧铆脳脢脭麓碌脛路脙脦脢
     }
 
     while (processor.abstractFifoOutput.getNumReady() >= fftOutput.getSize())
@@ -210,12 +210,12 @@ void SpectrumAnalyzer::drawNextFrame()
     }
 }
 
-// 如果下一个FFT块已经准备好，则调用drawNextFrame()函数将平均输出缓冲区中的数据绘制到屏幕上，并通过repaint()函数刷新屏幕
+// 脠莽鹿没脧脗脪禄赂枚FFT驴茅脪脩戮颅脳录卤赂潞脙拢卢脭貌碌梅脫脙drawNextFrame()潞炉脢媒陆芦脝陆戮霉脢盲鲁枚禄潞鲁氓脟酶脰脨碌脛脢媒戮脻禄忙脰脝碌陆脝脕脛禄脡脧拢卢虏垄脥篓鹿媒repaint()潞炉脢媒脣垄脨脗脝脕脛禄
 void SpectrumAnalyzer::timerCallback()
 {
     if (!processor.nextFFTBlockReady.load()) return;
 
-    // 将平均输出缓冲区中的数据绘制到屏幕上，用于显示频谱信息
+    // 陆芦脝陆戮霉脢盲鲁枚禄潞鲁氓脟酶脰脨碌脛脢媒戮脻禄忙脰脝碌陆脝脕脛禄脡脧拢卢脫脙脫脷脧脭脢戮脝碌脝脳脨脜脧垄
     drawNextFrame();
     processor.nextFFTBlockReady.store(false);
     repaint();
