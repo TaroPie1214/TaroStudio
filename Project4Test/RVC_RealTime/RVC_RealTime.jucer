@@ -4,6 +4,8 @@
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1">
   <MAINGROUP id="w4aLni" name="RVC_RealTime">
     <GROUP id="{F38FA0B8-9232-24BF-51E2-4FC7FDFCCBF7}" name="Source">
+      <FILE id="RLUmol" name="postAudio.cpp" compile="1" resource="0" file="Source/postAudio.cpp"/>
+      <FILE id="fdrezE" name="postAudio.h" compile="0" resource="0" file="Source/postAudio.h"/>
       <GROUP id="{2264FE08-FC71-C4C7-05B3-AE34AA46AB2E}" name="Assets">
         <FILE id="YhpMBg" name="dry_short_cut.wav" compile="0" resource="1"
               file="Source/Assets/dry_short_cut.wav"/>

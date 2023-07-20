@@ -60,11 +60,18 @@ public:
     juce::AudioBuffer<float>& RVC_RealTimeAudioProcessor::getAudioBuffer();
     void readWav();
 
+    void write2CircularBuffer(juce::AudioBuffer<float>& inputBuffer);
+    void postAudio();
+    void postWav();
+
 private:
     juce::AudioFormatManager formatManager;
     juce::AudioBuffer<float> audioBuffer;
-    int audioBufferSampleRate = 48000;
+    int audioBufferSampleRate = 48000; 
     bool firstProcess = true;
+
+    juce::AudioBuffer<float> circularBuffer{ 1, 4800 };
+    int writePointer = 0;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RVC_RealTimeAudioProcessor)
 };

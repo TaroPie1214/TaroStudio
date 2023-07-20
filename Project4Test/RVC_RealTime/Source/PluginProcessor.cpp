@@ -155,57 +155,125 @@ void RVC_RealTimeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 {
     //if (firstProcess == true)
     //{
-        int numSamples = buffer.getNumSamples();
-
-        // 获取AudioBuffer数据指针数组
-        const float* data = buffer.getReadPointer(0);
-
-        juce::MemoryBlock memoryBlock(data, numSamples * sizeof(float));
-
-        int bufferSize = buffer.getNumSamples(); // 你的bufferSize值
-        int sampleRate = getSampleRate(); // 你的sampleRate值
-
-        // 将bufferSize和sampleRate转换为字节序列
-        juce::MemoryBlock bufferSizeBlock(sizeof(bufferSize));
-        juce::MemoryBlock sampleRateBlock(sizeof(sampleRate));
-
-        bufferSizeBlock.append(&bufferSize, sizeof(bufferSize));
-        sampleRateBlock.append(&sampleRate, sizeof(sampleRate));
-
-        //// 将bufferSize和sampleRate的字节序列追加到wavBlock中
-        memoryBlock.append(bufferSizeBlock.getData(), bufferSizeBlock.getSize());
-        memoryBlock.append(sampleRateBlock.getData(), sampleRateBlock.getSize());
-
-        auto url = juce::URL("http://127.0.0.1:8080/voiceChangeModel")
-            .withPOSTData(memoryBlock);
-
-        std::unique_ptr<juce::InputStream> response = url.createInputStream(juce::URL::InputStreamOptions((juce::URL::ParameterHandling::inPostData)));
-
-        if (response != nullptr)
-        {
-            juce::MemoryBlock responseBlock;
-            response->readIntoMemoryBlock(responseBlock);
-
-            /* juce::AudioBuffer<float> resultBuffer(1, bufferSize);
-             resultBuffer.clear();*/
-
-            responseBlock.removeSection(0, 44);
-            DBG(responseBlock.getSize());
-
-            //float* audioData = buffer.getWritePointer(0); // 获取写入指针
-            //const float* binaryFloatData = reinterpret_cast<const float*>(responseBlock.getData()); // 获取二进制数据的float指针
-            //int binaryDataSize = responseBlock.getSize() / sizeof(float); // 计算二进制数据的大小
-            //for (int i = 0; i < buffer.getNumSamples(); ++i) {
-            //    if (i < binaryDataSize) {
-            //        audioData[i] = binaryFloatData[i]; // 将二进制数据复制到AudioBuffer中
-            //    }
-            //    else {
-            //        audioData[i] = 0.0f; // 如果二进制数据不足，将剩余位置填充为0
-            //    }
-            //}
-        }
+        //postWav();
+        write2CircularBuffer(buffer);
     //}
     //firstProcess = false;
+}
+
+void RVC_RealTimeAudioProcessor::write2CircularBuffer(juce::AudioBuffer<float>& inputBuffer)
+{
+    // 如果此时circular buffer中还放得下当前inputBuffer的内容，直接写入
+    if (writePointer + inputBuffer.getNumSamples() < circularBuffer.getNumSamples())
+    {
+        circularBuffer.copyFrom(0, writePointer, inputBuffer, 0, 0, inputBuffer.getNumSamples());
+        writePointer += inputBuffer.getNumSamples();
+    }
+    else
+    {
+        // 如果此时circular buffer中放不下当前inputBuffer的内容，先写入circular buffer的末尾，再写入circular buffer的开头
+		int firstPartSize = circularBuffer.getNumSamples() - writePointer;
+		circularBuffer.copyFrom(0, writePointer, inputBuffer, 0, 0, firstPartSize);
+
+        postAudio();
+
+		circularBuffer.copyFrom(0, 0, inputBuffer, 0, firstPartSize, inputBuffer.getNumSamples() - firstPartSize);
+		writePointer = inputBuffer.getNumSamples() - firstPartSize;
+    }
+}
+
+void RVC_RealTimeAudioProcessor::postAudio()
+{
+    int numSamples = circularBuffer.getNumSamples();
+
+    // 获取AudioBuffer数据指针数组
+    const float* data = circularBuffer.getReadPointer(0);
+
+    juce::MemoryBlock memoryBlock(data, numSamples * sizeof(float));
+
+    int bufferSize = circularBuffer.getNumSamples(); // 你的bufferSize值
+    int sampleRate = getSampleRate(); // 你的sampleRate值
+
+    // 将bufferSize和sampleRate转换为字节序列
+    juce::MemoryBlock bufferSizeBlock(sizeof(bufferSize));
+    juce::MemoryBlock sampleRateBlock(sizeof(sampleRate));
+
+    bufferSizeBlock.append(&bufferSize, sizeof(bufferSize));
+    sampleRateBlock.append(&sampleRate, sizeof(sampleRate));
+
+    // 将bufferSize和sampleRate的字节序列追加到wavBlock中
+    memoryBlock.append(bufferSizeBlock.getData(), bufferSizeBlock.getSize());
+    memoryBlock.append(sampleRateBlock.getData(), sampleRateBlock.getSize());
+
+    auto url = juce::URL("http://127.0.0.1:8080/voiceChangeModel")
+        .withPOSTData(memoryBlock);
+
+    std::unique_ptr<juce::InputStream> response = url.createInputStream(juce::URL::InputStreamOptions((juce::URL::ParameterHandling::inPostData)));
+
+    //if (response != nullptr)
+    //{
+    //    juce::MemoryBlock responseBlock;
+    //    response->readIntoMemoryBlock(responseBlock);
+
+    //    /* juce::AudioBuffer<float> resultBuffer(1, bufferSize);
+    //     resultBuffer.clear();*/
+
+    //    responseBlock.removeSection(0, 44);
+    //    DBG(responseBlock.getSize());
+
+    //    float* audioData = buffer.getWritePointer(0); // 获取写入指针
+    //    const float* binaryFloatData = reinterpret_cast<const float*>(responseBlock.getData()); // 获取二进制数据的float指针
+    //    int binaryDataSize = responseBlock.getSize() / sizeof(float); // 计算二进制数据的大小
+    //    for (int i = 0; i < buffer.getNumSamples(); ++i) {
+    //        if (i < binaryDataSize) {
+    //            audioData[i] = binaryFloatData[i]; // 将二进制数据复制到AudioBuffer中
+    //        }
+    //        else {
+    //            audioData[i] = 0.0f; // 如果二进制数据不足，将剩余位置填充为0
+    //        }
+    //    }
+    //}
+}
+
+void RVC_RealTimeAudioProcessor::postWav()
+{
+    readWav();
+    const int numSamples = audioBuffer.getNumSamples();
+
+    // 获取AudioBuffer数据指针数组
+    const float* data = audioBuffer.getReadPointer(0);
+
+    juce::MemoryBlock memoryBlock(data, numSamples * sizeof(float));
+
+    int bufferSize = 480000; // 你的bufferSize值
+    int sampleRate = 48000; // 你的sampleRate值
+
+    // 将bufferSize和sampleRate转换为字节序列
+    juce::MemoryBlock bufferSizeBlock(sizeof(bufferSize));
+    juce::MemoryBlock sampleRateBlock(sizeof(sampleRate));
+
+    bufferSizeBlock.append(&bufferSize, sizeof(bufferSize));
+    sampleRateBlock.append(&sampleRate, sizeof(sampleRate));
+
+    //// 将bufferSize和sampleRate的字节序列追加到wavBlock中
+    memoryBlock.append(bufferSizeBlock.getData(), bufferSizeBlock.getSize());
+    memoryBlock.append(sampleRateBlock.getData(), sampleRateBlock.getSize());
+
+    auto url = juce::URL("http://127.0.0.1:8080/voiceChangeModel")
+        .withPOSTData(memoryBlock);
+
+    std::unique_ptr<juce::InputStream> response = url.createInputStream(juce::URL::InputStreamOptions((juce::URL::ParameterHandling::inPostData)));
+
+    if (response != nullptr)
+    {
+        juce::MemoryBlock responseBlock;
+        response->readIntoMemoryBlock(responseBlock);
+
+        // 在这里对responseBlock进行处理，例如保存为.wav文件
+        // 你可以使用juce::FileOutputStream写入到磁盘上的文件
+        juce::FileOutputStream outputStream(juce::String("E:\\miao.wav"));
+        outputStream.write(responseBlock.getData(), responseBlock.getSize());
+    }
 }
 
 //==============================================================================
