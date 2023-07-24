@@ -140,6 +140,7 @@ juce::AudioBuffer<float>& RVC_RealTimeAudioProcessor::getAudioBuffer()
     return audioBuffer;
 }
 
+// 固定读取Assets文件夹下的wav文件，并存入变量audioBuffer
 void RVC_RealTimeAudioProcessor::readWav()
 {
     auto* reader = formatManager.createReaderFor(std::make_unique<juce::MemoryInputStream>(BinaryData::dry_short_cut_wav, BinaryData::dry_short_cut_wavSize, false));
@@ -161,6 +162,7 @@ void RVC_RealTimeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     //firstProcess = false;
 }
 
+// 写入circular buffer
 void RVC_RealTimeAudioProcessor::write2CircularBuffer(juce::AudioBuffer<float>& inputBuffer)
 {
     // 如果此时circular buffer中还放得下当前inputBuffer的内容，直接写入
@@ -175,14 +177,17 @@ void RVC_RealTimeAudioProcessor::write2CircularBuffer(juce::AudioBuffer<float>& 
 		int firstPartSize = circularBuffer.getNumSamples() - writePointer;
 		circularBuffer.copyFrom(0, writePointer, inputBuffer, 0, 0, firstPartSize);
 
-        postAudio();
+        // circular buffer被写满，将其内容传给backend
+        // 注：此步骤为优化重点，由于请求和模型推理的时间消耗，需要修改为异步并行处理
+        postAudio2Backend(inputBuffer);
 
 		circularBuffer.copyFrom(0, 0, inputBuffer, 0, firstPartSize, inputBuffer.getNumSamples() - firstPartSize);
 		writePointer = inputBuffer.getNumSamples() - firstPartSize;
     }
 }
 
-void RVC_RealTimeAudioProcessor::postAudio()
+// 向后端发送音频数据
+void RVC_RealTimeAudioProcessor::postAudio2Backend(juce::AudioBuffer<float>& buffer)
 {
     int numSamples = circularBuffer.getNumSamples();
 
@@ -202,39 +207,39 @@ void RVC_RealTimeAudioProcessor::postAudio()
     sampleRateBlock.append(&sampleRate, sizeof(sampleRate));
 
     // 将bufferSize和sampleRate的字节序列追加到wavBlock中
+    // 后端收到数据后需要首先解析提取出buffer size和sample rate的内容，具体如何提取已在后端代码中标注
     memoryBlock.append(bufferSizeBlock.getData(), bufferSizeBlock.getSize());
     memoryBlock.append(sampleRateBlock.getData(), sampleRateBlock.getSize());
 
     auto url = juce::URL("http://127.0.0.1:8080/voiceChangeModel")
         .withPOSTData(memoryBlock);
 
+    // 发送请求，并得到回复
     std::unique_ptr<juce::InputStream> response = url.createInputStream(juce::URL::InputStreamOptions((juce::URL::ParameterHandling::inPostData)));
 
-    //if (response != nullptr)
-    //{
-    //    juce::MemoryBlock responseBlock;
-    //    response->readIntoMemoryBlock(responseBlock);
+    if (response != nullptr)
+    {
+        juce::MemoryBlock responseBlock;
+        response->readIntoMemoryBlock(responseBlock);
 
-    //    /* juce::AudioBuffer<float> resultBuffer(1, bufferSize);
-    //     resultBuffer.clear();*/
+        responseBlock.removeSection(0, 44);
+        DBG(responseBlock.getSize());
 
-    //    responseBlock.removeSection(0, 44);
-    //    DBG(responseBlock.getSize());
-
-    //    float* audioData = buffer.getWritePointer(0); // 获取写入指针
-    //    const float* binaryFloatData = reinterpret_cast<const float*>(responseBlock.getData()); // 获取二进制数据的float指针
-    //    int binaryDataSize = responseBlock.getSize() / sizeof(float); // 计算二进制数据的大小
-    //    for (int i = 0; i < buffer.getNumSamples(); ++i) {
-    //        if (i < binaryDataSize) {
-    //            audioData[i] = binaryFloatData[i]; // 将二进制数据复制到AudioBuffer中
-    //        }
-    //        else {
-    //            audioData[i] = 0.0f; // 如果二进制数据不足，将剩余位置填充为0
-    //        }
-    //    }
-    //}
+        float* audioData = buffer.getWritePointer(0); // 获取写入指针
+        const float* binaryFloatData = reinterpret_cast<const float*>(responseBlock.getData()); // 获取二进制数据的float指针
+        int binaryDataSize = responseBlock.getSize() / sizeof(float); // 计算二进制数据的大小
+        for (int i = 0; i < buffer.getNumSamples(); ++i) {
+            if (i < binaryDataSize) {
+                audioData[i] = binaryFloatData[i]; // 将二进制数据复制到AudioBuffer中
+            }
+            else {
+                audioData[i] = 0.0f; // 如果二进制数据不足，将剩余位置填充为0
+            }
+        }
+    }
 }
 
+// 用于测试通信使用，发送固定的wav文件，并得到返回结果进行通信验证
 void RVC_RealTimeAudioProcessor::postWav()
 {
     readWav();
@@ -269,9 +274,8 @@ void RVC_RealTimeAudioProcessor::postWav()
         juce::MemoryBlock responseBlock;
         response->readIntoMemoryBlock(responseBlock);
 
-        // 在这里对responseBlock进行处理，例如保存为.wav文件
-        // 你可以使用juce::FileOutputStream写入到磁盘上的文件
-        juce::FileOutputStream outputStream(juce::String("E:\\miao.wav"));
+        // 把返回的结果写入指定目录
+        juce::FileOutputStream outputStream(juce::String("E:\\test.wav"));
         outputStream.write(responseBlock.getData(), responseBlock.getSize());
     }
 }

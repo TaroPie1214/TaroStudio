@@ -9,6 +9,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "postAudio.h"
 
 //==============================================================================
 /**
@@ -61,7 +62,7 @@ public:
     void readWav();
 
     void write2CircularBuffer(juce::AudioBuffer<float>& inputBuffer);
-    void postAudio();
+    void postAudio2Backend(juce::AudioBuffer<float>& buffer);
     void postWav();
 
 private:
@@ -70,8 +71,10 @@ private:
     int audioBufferSampleRate = 48000; 
     bool firstProcess = true;
 
-    juce::AudioBuffer<float> circularBuffer{ 1, 4800 };
+    juce::AudioBuffer<float> circularBuffer{ 1, 48000 }; // 长度为1s音频内容的circularBuffer
     int writePointer = 0;
+
+    postAudio postAudioThread;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RVC_RealTimeAudioProcessor)
 };
