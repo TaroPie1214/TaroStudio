@@ -26,13 +26,13 @@ TaroCompressorAudioProcessor::TaroCompressorAudioProcessor()
     jassert(attack != nullptr);
     
     release = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("Release"));
-    jassert(attack != nullptr);
+    jassert(release != nullptr);
     
     threshold = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("Threshold"));
-    jassert(attack != nullptr);
+    jassert(threshold != nullptr);
     
     ratio = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("Ratio"));
-    jassert(attack != nullptr);
+    jassert(ratio != nullptr);
 }
 
 TaroCompressorAudioProcessor::~TaroCompressorAudioProcessor()
