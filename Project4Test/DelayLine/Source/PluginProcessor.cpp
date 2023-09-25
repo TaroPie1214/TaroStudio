@@ -103,6 +103,8 @@ void DelayLineAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
     myDelay.setDelay(24000);
     
     mySampleRate = sampleRate;
+
+    delayTime.reset(sampleRate, samplesPerBlock / sampleRate);
 }
 
 void DelayLineAudioProcessor::releaseResources()
@@ -145,9 +147,10 @@ void DelayLineAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
-    
+
+    delayTime.setTargetValue(apvts.getRawParameterValue("Time")->load());
     // 通过秒数和采样率得出延迟多少sample
-    int delayTimeInSamples = apvts.getRawParameterValue("TIME_ID")->load() * mySampleRate;
+    int delayTimeInSamples = delayTime.getNextValue() * mySampleRate;
     myDelay.setDelay(delayTimeInSamples);
     
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
@@ -159,7 +162,7 @@ void DelayLineAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
         {
             // 拿
             float delayedSample = myDelay.popSample(channel);
-            float inDelay = inSamples[i] + (apvts.getRawParameterValue("FEEDBACK_ID")->load() * delayedSample);
+            float inDelay = inSamples[i] + (apvts.getRawParameterValue("Feedback")->load() * delayedSample);
             // 放
             myDelay.pushSample(channel, inDelay);
             outSamples[i] = inSamples[i] + delayedSample;
@@ -200,13 +203,13 @@ juce::AudioProcessorValueTreeState::ParameterLayout DelayLineAudioProcessor::cre
     
     using namespace juce;
     
-    layout.add(std::make_unique<AudioParameterFloat>(ParameterID {"TIME_ID", 1},
-                                                     "Time_NAME",
+    layout.add(std::make_unique<AudioParameterFloat>(ParameterID {"Time", 1},
+                                                     "Time",
                                                      0.01f,
                                                      0.9f,
                                                      0.25f));
-    layout.add(std::make_unique<AudioParameterFloat>(ParameterID {"FEEDBACK_ID", 1},
-                                                     "FEEDBACK_NAME",
+    layout.add(std::make_unique<AudioParameterFloat>(ParameterID {"Feedback", 1},
+                                                     "Feedback",
                                                      0.01f,
                                                      0.9f,
                                                      0.25f));

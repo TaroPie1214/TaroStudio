@@ -63,6 +63,8 @@ public:
     
 private:
     juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear> myDelay {192000};
+
+    juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> delayTime;
     
     double mySampleRate {0.0};
     
