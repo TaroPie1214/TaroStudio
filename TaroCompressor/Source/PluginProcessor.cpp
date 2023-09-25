@@ -22,17 +22,6 @@ TaroCompressorAudioProcessor::TaroCompressorAudioProcessor()
                        )
 #endif
 {
-    attack = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("Attack"));
-    jassert(attack != nullptr);
-    
-    release = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("Release"));
-    jassert(release != nullptr);
-    
-    threshold = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("Threshold"));
-    jassert(threshold != nullptr);
-    
-    ratio = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("Ratio"));
-    jassert(ratio != nullptr);
 }
 
 TaroCompressorAudioProcessor::~TaroCompressorAudioProcessor()
@@ -161,10 +150,10 @@ void TaroCompressorAudioProcessor::processBlock (juce::AudioBuffer<float>& buffe
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
     
-    compressor.setAttack(attack->get());
-    compressor.setRelease(release->get());
-    compressor.setThreshold(threshold->get());
-    compressor.setRatio( ratio->getCurrentChoiceName().getFloatValue() );
+    compressor.setAttack(*apvts.getRawParameterValue("Attack"));
+    compressor.setRelease(*apvts.getRawParameterValue("Release"));
+    compressor.setThreshold(*apvts.getRawParameterValue("Threshold"));
+    compressor.setRatio(*apvts.getRawParameterValue("Ratio"));
     
     auto block = juce::dsp::AudioBlock<float>(buffer);
     auto context = juce::dsp::ProcessContextReplacing<float>(block);
@@ -218,7 +207,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TaroCompressorAudioProcessor
 
     layout.add(std::make_unique<AudioParameterFloat>(ParameterID { "Release", 1 }, "Release", attackReleaseRange, 250));
 
-    auto choices = std::vector<double>{ 1, 1.5, 2, 3, 4, 5, 6, 7, 8, 10, 15, 20, 50, 100 };
+    auto choices = std::vector<double>{ 1.5, 2, 3, 4, 5, 6, 7, 8, 10, 15, 20, 50, 100 };
     juce::StringArray sa;
     for ( auto choice : choices )
     {
