@@ -202,10 +202,12 @@ void TaroCompressorAudioProcessor::setStateInformation (const void* data, int si
 
 juce::AudioProcessorValueTreeState::ParameterLayout TaroCompressorAudioProcessor::createParameterLayout()
 {
+    // 创建layout
     APVTS::ParameterLayout layout;
     
     using namespace juce;
     
+    // 向layout中添加参数
     layout.add(std::make_unique<AudioParameterFloat>(ParameterID { "Threshold", 1 },
                                                      "Threshold",
                                                      NormalisableRange<float>(-60, 12, 1, 1), 0));
@@ -220,7 +222,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TaroCompressorAudioProcessor
     juce::StringArray sa;
     for ( auto choice : choices )
     {
-        sa.add( juce::String(choice, 1) );
+        sa.add( juce::String(choice) );
     }
 
     layout.add(std::make_unique<AudioParameterChoice>(ParameterID { "Ratio", 1 }, "Ratio", sa, 3));
