@@ -207,7 +207,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TaroChorusAudioProcessor::cr
                                                      NormalisableRange<float>(0.0f, 1.f, 0.01f, 1), 0));
     layout.add(std::make_unique<AudioParameterFloat>(ParameterID{ "Gain", 1 },
                                                      "Gain(dB)",
-                                                     NormalisableRange<float>(-10.0f, 10.f, 0.1f, 1), 0));
+                                                     NormalisableRange<float>(-10.f, 10.f, 0.1f, 1), 0));
     
     return layout;
 }
