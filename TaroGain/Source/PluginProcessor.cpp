@@ -19,7 +19,7 @@ TaroGainAudioProcessor::TaroGainAudioProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       ),apvts(*this, nullptr, "Parameters", createParameters())
+                       )
 #endif
 {
 }
@@ -93,8 +93,14 @@ void TaroGainAudioProcessor::changeProgramName (int index, const juce::String& n
 //==============================================================================
 void TaroGainAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
+    // 方式4
+    juce::dsp::ProcessSpec spec;
+    spec.maximumBlockSize = samplesPerBlock;
+    spec.numChannels = getTotalNumInputChannels();
+    spec.sampleRate = sampleRate;
+
+    gain.prepare(spec);
+    gain.reset();
 }
 
 void TaroGainAudioProcessor::releaseResources()
@@ -131,35 +137,45 @@ bool TaroGainAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts)
 
 void TaroGainAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    // 禁用浮点数的非规格化处理
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    auto g = apvts.getRawParameterValue("Gain");
-    std::cout << g->load() << std::endl;
-    
-    auto currentGain = g->load();
-    
-    if (currentGain == previousGain)
-    {
-        buffer.applyGain (currentGain);
-    }
-    else
-    {
-        buffer.applyGainRamp (0, buffer.getNumSamples(), previousGain, currentGain);
-        previousGain = currentGain;
-    }
-    
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
+        buffer.clear(i, 0, buffer.getNumSamples());
 
+    float currentGain = *apvts.getRawParameterValue("Gain");
 
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
+    // 方式1
+    /*for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
         auto* channelData = buffer.getWritePointer (channel);
 
-        // ..do something to the data...
-    }
+        for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+		{
+			channelData[sample] *= juce::Decibels::decibelsToGain(currentGain);
+		}
+    }*/
+
+    // 方式2
+    /*juce::dsp::AudioBlock<float> block(buffer);
+    for (int channel = 0; channel < block.getNumChannels(); ++channel)
+    {
+		auto* channelData = block.getChannelPointer(channel);
+        for (int sample = 0; sample < block.getNumSamples(); ++sample)
+        {
+			channelData[sample] *= juce::Decibels::decibelsToGain(currentGain);
+		}
+	}*/
+
+    // 方式3
+    //buffer.applyGain(juce::Decibels::decibelsToGain(currentGain));
+    
+    // 方式4
+    juce::dsp::AudioBlock<float> block(buffer);
+    gain.setGainDecibels(currentGain);
+    gain.process(juce::dsp::ProcessContextReplacing<float>(block));
 }
 
 //==============================================================================
@@ -170,7 +186,8 @@ bool TaroGainAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* TaroGainAudioProcessor::createEditor()
 {
-    return new TaroGainAudioProcessorEditor (*this);
+    //return new TaroGainAudioProcessorEditor (*this);
+    return new juce::GenericAudioProcessorEditor(*this);
 }
 
 //==============================================================================
@@ -196,11 +213,15 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
     return new TaroGainAudioProcessor();
 }
 
-juce::AudioProcessorValueTreeState::ParameterLayout TaroGainAudioProcessor::createParameters()
+juce::AudioProcessorValueTreeState::ParameterLayout TaroGainAudioProcessor::createParameterLayout()
 {
-    std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
+    APVTS::ParameterLayout layout;
+
+    using namespace juce;
     
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("Gain", "Gain", 0.0f, 1.0f, 0.5f));
+    layout.add(std::make_unique<AudioParameterFloat>("Gain",
+                                                     "Gain(dB)",
+                                                     NormalisableRange<float>(-10.f, 10.f, 0.1f, 1), 0.f));
     
-    return { params.begin(), params.end() };
+    return layout;
 }

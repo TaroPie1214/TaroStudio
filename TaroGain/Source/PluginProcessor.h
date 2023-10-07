@@ -53,11 +53,14 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
     
-    juce::AudioProcessorValueTreeState apvts;
+    using APVTS = juce::AudioProcessorValueTreeState;
+    static APVTS::ParameterLayout createParameterLayout();
+
+    APVTS apvts{ *this, nullptr, "Parameters", createParameterLayout() };
+
 private:
-    juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
-    
-    float previousGain;
+    // ·½Ê½4
+    juce::dsp::Gain<float> gain;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TaroGainAudioProcessor)
 };
