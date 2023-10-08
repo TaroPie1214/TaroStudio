@@ -164,7 +164,7 @@ void TaroDoublerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
     // 通过秒数和采样率得出延迟多少sample
     int delayTimeInSamples = delayTime.getNextValue() * mySampleRate;
     delayLine1.setDelay(delayTimeInSamples);
-    delayLine2.setDelay(delayTimeInSamples - apvts.getRawParameterValue("Offset1")->load());
+    delayLine2.setDelay(delayTimeInSamples + apvts.getRawParameterValue("Offset1")->load());
     delayLine3.setDelay(delayTimeInSamples + apvts.getRawParameterValue("Offset2")->load());
     delayLine4.setDelay(delayTimeInSamples + apvts.getRawParameterValue("Offset3")->load());
     delayLine5.setDelay(delayTimeInSamples + apvts.getRawParameterValue("Offset4")->load());
@@ -217,15 +217,17 @@ juce::AudioProcessorEditor* TaroDoublerAudioProcessor::createEditor()
 //==============================================================================
 void TaroDoublerAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
+    juce::MemoryOutputStream stream(destData, false);
+    apvts.state.writeToStream(stream);
 }
 
-void TaroDoublerAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
+void TaroDoublerAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
+    juce::ValueTree tree = juce::ValueTree::readFromData(data, sizeInBytes);
+
+    if (tree.isValid()) {
+        apvts.state = tree;
+    }
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout TaroDoublerAudioProcessor::createParameterLayout()
@@ -236,9 +238,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout TaroDoublerAudioProcessor::c
 
     layout.add(std::make_unique<AudioParameterFloat>(ParameterID{ "Time", 1 },
         "Time",
-        0.01f,
-        0.9f,
-        0.25f));
+        NormalisableRange<float>(0.01f, 0.5f, 0.01f, 1.f),
+        0.05f));
     layout.add(std::make_unique<AudioParameterFloat>(ParameterID{ "Feedback", 1 },
         "Feedback",
         0.01f,
