@@ -93,8 +93,8 @@ void TaroDelayAudioProcessor::changeProgramName (int index, const juce::String& 
 //==============================================================================
 void TaroDelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
+    auto delayBufferSize = sampleRate * 2.0;
+    delayBuffer.setSize (getTotalNumOutputChannels(), (int)delayBufferSize);
 }
 
 void TaroDelayAudioProcessor::releaseResources()
@@ -135,27 +135,80 @@ void TaroDelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
-
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
+    
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
-        auto* channelData = buffer.getWritePointer (channel);
-
-        // ..do something to the data...
+        fillBuffer(buffer, channel);
+        readFromBuffer(buffer, delayBuffer, channel);
+        fillBuffer(buffer, channel);
     }
+    
+    updateBufferPositions(buffer, delayBuffer);
+    
+}
+
+void TaroDelayAudioProcessor::fillBuffer(juce::AudioBuffer<float>& buffer, int channel)
+{
+    auto bufferSize = buffer.getNumSamples();
+    auto delayBufferSize = delayBuffer.getNumSamples();
+    
+    // 首先判断circular buffer里面剩余的空间够不够放下这次的buffer
+    if (delayBufferSize > bufferSize + writePosition)
+    {
+        // 直接在当前的writePositon往后写入当前的buffer
+        delayBuffer.copyFrom(channel, writePosition, buffer.getWritePointer (channel), bufferSize);
+    }
+    // 如果不够的话
+    else
+    {
+        // 先看看最后还剩多少空间，全部都填上
+        auto numSamplesToEnd = delayBufferSize - writePosition;
+        delayBuffer.copyFrom(channel, writePosition, buffer.getWritePointer (channel), numSamplesToEnd);
+        
+        // 再看看bufferSize减去刚刚填在最后的部分还剩下多少
+        auto numSamplesAtStart = bufferSize - numSamplesToEnd;
+        // 从circular buffer的头部覆盖写入剩下的内容
+        delayBuffer.copyFrom(channel, 0, buffer.getWritePointer (channel, numSamplesToEnd), numSamplesAtStart);
+    }
+}
+
+void TaroDelayAudioProcessor::readFromBuffer(juce::AudioBuffer<float>& buffer, juce::AudioBuffer<float>& delayBuffer, int channel)
+{
+    auto bufferSize = buffer.getNumSamples();
+    auto delayBufferSize = delayBuffer.getNumSamples();
+    auto currentFeedBack = apvts.getRawParameterValue("FEEDBACK")->load();
+    auto currentDelay = apvts.getRawParameterValue("DELAY")->load();
+    
+    // 获取1秒前的audio
+    auto readPosition = writePosition - currentDelay * getSampleRate();
+    // 值得注意的是，当writePosition位于circular buffer的开头位置时，这里的readPositon可能为负数，但这是不允许出现的
+    // 所以我们把它指向应该指向的位置，即circular buffer的尾部区域
+    if(readPosition < 0)
+        readPosition += delayBufferSize;
+    
+    if (readPosition + bufferSize < delayBufferSize)
+    {
+        buffer.addFromWithRamp(channel, 0, delayBuffer.getReadPointer(channel, readPosition), bufferSize, currentFeedBack, currentFeedBack);
+    }
+    else
+    {
+        auto numSamplesToEnd = delayBufferSize - readPosition;
+        buffer.addFromWithRamp(channel, 0, delayBuffer.getReadPointer(channel, readPosition), numSamplesToEnd, currentFeedBack, currentFeedBack);
+        
+        auto numSamplesAtStart = bufferSize - numSamplesToEnd;
+        buffer.addFromWithRamp(channel, numSamplesToEnd, delayBuffer.getReadPointer(channel, 0), numSamplesAtStart, currentFeedBack, currentFeedBack);
+    }
+}
+
+void TaroDelayAudioProcessor::updateBufferPositions(juce::AudioBuffer<float>& buffer, juce::AudioBuffer<float>& delayBuffer)
+{
+    auto bufferSize = buffer.getNumSamples();
+    auto delayBufferSize = delayBuffer.getNumSamples();
+    
+    writePosition += bufferSize;
+    writePosition %= delayBufferSize;
 }
 
 //==============================================================================
@@ -166,41 +219,40 @@ bool TaroDelayAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* TaroDelayAudioProcessor::createEditor()
 {
-    //return new TaroDelayAudioProcessorEditor (*this);
-    return new juce::GenericAudioProcessorEditor(*this);
+    return new juce::GenericAudioProcessorEditor (*this);
+    // return new TaroDelayAudioProcessorEditor (*this);
 }
 
 //==============================================================================
 void TaroDelayAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
+    juce::MemoryOutputStream stream(destData, false);
+    apvts.state.writeToStream(stream);
 }
 
 void TaroDelayAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
+    juce::ValueTree tree = juce::ValueTree::readFromData(data, sizeInBytes);
+            
+    if (tree.isValid()) {
+        apvts.state = tree;
+    }
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout TaroDelayAudioProcessor::createParameterLayout()
 {
     APVTS::ParameterLayout layout;
-
+    
     using namespace juce;
-
-    layout.add(std::make_unique<AudioParameterFloat>(ParameterID{ "Time", 1 },
-        "Time",
-        0.01f,
-        0.9f,
-        0.25f));
-    layout.add(std::make_unique<AudioParameterFloat>(ParameterID{ "Feedback", 1 },
-        "Feedback",
-        0.01f,
-        0.9f,
-        0.25f));
-
+    
+    layout.add(std::make_unique<AudioParameterFloat>(ParameterID { "FEEDBACK", 1 },
+                                                     "FEEDBACK",
+                                                     NormalisableRange<float>(0, 1, 0.1, 1), 0.5));
+    
+    layout.add(std::make_unique<AudioParameterFloat>(ParameterID { "DELAY", 1 },
+                                                     "DELAY",
+                                                     NormalisableRange<float>(0, 2, 0.1, 1), 1));
+    
     return layout;
 }
 

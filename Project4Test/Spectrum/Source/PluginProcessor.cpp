@@ -10,7 +10,7 @@
 #include "PluginEditor.h"
 
 //==============================================================================
-TaroDelayAudioProcessor::TaroDelayAudioProcessor()
+SpectrumAudioProcessor::SpectrumAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
      : AudioProcessor (BusesProperties()
                      #if ! JucePlugin_IsMidiEffect
@@ -24,17 +24,17 @@ TaroDelayAudioProcessor::TaroDelayAudioProcessor()
 {
 }
 
-TaroDelayAudioProcessor::~TaroDelayAudioProcessor()
+SpectrumAudioProcessor::~SpectrumAudioProcessor()
 {
 }
 
 //==============================================================================
-const juce::String TaroDelayAudioProcessor::getName() const
+const juce::String SpectrumAudioProcessor::getName() const
 {
     return JucePlugin_Name;
 }
 
-bool TaroDelayAudioProcessor::acceptsMidi() const
+bool SpectrumAudioProcessor::acceptsMidi() const
 {
    #if JucePlugin_WantsMidiInput
     return true;
@@ -43,7 +43,7 @@ bool TaroDelayAudioProcessor::acceptsMidi() const
    #endif
 }
 
-bool TaroDelayAudioProcessor::producesMidi() const
+bool SpectrumAudioProcessor::producesMidi() const
 {
    #if JucePlugin_ProducesMidiOutput
     return true;
@@ -52,7 +52,7 @@ bool TaroDelayAudioProcessor::producesMidi() const
    #endif
 }
 
-bool TaroDelayAudioProcessor::isMidiEffect() const
+bool SpectrumAudioProcessor::isMidiEffect() const
 {
    #if JucePlugin_IsMidiEffect
     return true;
@@ -61,50 +61,54 @@ bool TaroDelayAudioProcessor::isMidiEffect() const
    #endif
 }
 
-double TaroDelayAudioProcessor::getTailLengthSeconds() const
+double SpectrumAudioProcessor::getTailLengthSeconds() const
 {
     return 0.0;
 }
 
-int TaroDelayAudioProcessor::getNumPrograms()
+int SpectrumAudioProcessor::getNumPrograms()
 {
     return 1;   // NB: some hosts don't cope very well if you tell them there are 0 programs,
                 // so this should be at least 1, even if you're not really implementing programs.
 }
 
-int TaroDelayAudioProcessor::getCurrentProgram()
+int SpectrumAudioProcessor::getCurrentProgram()
 {
     return 0;
 }
 
-void TaroDelayAudioProcessor::setCurrentProgram (int index)
+void SpectrumAudioProcessor::setCurrentProgram (int index)
 {
 }
 
-const juce::String TaroDelayAudioProcessor::getProgramName (int index)
+const juce::String SpectrumAudioProcessor::getProgramName (int index)
 {
     return {};
 }
 
-void TaroDelayAudioProcessor::changeProgramName (int index, const juce::String& newName)
+void SpectrumAudioProcessor::changeProgramName (int index, const juce::String& newName)
 {
 }
 
 //==============================================================================
-void TaroDelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void SpectrumAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
+    // dry wet buffer init
+    mDryBuffer.setSize(getTotalNumInputChannels(), samplesPerBlock);
+    mDryBuffer.clear();
+
+    mWetBuffer.setSize(getTotalNumInputChannels(), samplesPerBlock);
+    mWetBuffer.clear();
 }
 
-void TaroDelayAudioProcessor::releaseResources()
+void SpectrumAudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
-bool TaroDelayAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
+bool SpectrumAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {
   #if JucePlugin_IsMidiEffect
     juce::ignoreUnused (layouts);
@@ -129,84 +133,90 @@ bool TaroDelayAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts
 }
 #endif
 
-void TaroDelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+void SpectrumAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        auto* channelData = buffer.getWritePointer (channel);
-
-        // ..do something to the data...
-    }
+    // Spectrum
+    mWetBuffer.makeCopyOf(buffer);
+    pushDataToFFT();
 }
 
 //==============================================================================
-bool TaroDelayAudioProcessor::hasEditor() const
+bool SpectrumAudioProcessor::hasEditor() const
 {
     return true; // (change this to false if you choose to not supply an editor)
 }
 
-juce::AudioProcessorEditor* TaroDelayAudioProcessor::createEditor()
+juce::AudioProcessorEditor* SpectrumAudioProcessor::createEditor()
 {
-    //return new TaroDelayAudioProcessorEditor (*this);
-    return new juce::GenericAudioProcessorEditor(*this);
+    return new SpectrumAudioProcessorEditor (*this);
 }
 
 //==============================================================================
-void TaroDelayAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
+void SpectrumAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
 }
 
-void TaroDelayAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
+void SpectrumAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
 }
 
-juce::AudioProcessorValueTreeState::ParameterLayout TaroDelayAudioProcessor::createParameterLayout()
+float* SpectrumAudioProcessor::getFFTData()
 {
-    APVTS::ParameterLayout layout;
+    return spectrumProcessor.fftData;
+}
 
-    using namespace juce;
+int SpectrumAudioProcessor::getNumBins()
+{
+    return spectrumProcessor.numBins;
+}
 
-    layout.add(std::make_unique<AudioParameterFloat>(ParameterID{ "Time", 1 },
-        "Time",
-        0.01f,
-        0.9f,
-        0.25f));
-    layout.add(std::make_unique<AudioParameterFloat>(ParameterID{ "Feedback", 1 },
-        "Feedback",
-        0.01f,
-        0.9f,
-        0.25f));
+int SpectrumAudioProcessor::getFFTSize()
+{
+    return spectrumProcessor.fftSize;
+}
 
-    return layout;
+bool SpectrumAudioProcessor::isFFTBlockReady()
+{
+    return spectrumProcessor.nextFFTBlockReady;
+}
+
+void SpectrumAudioProcessor::pushDataToFFT()
+{
+    if (mWetBuffer.getNumChannels() > 0)
+    {
+        auto* channelData = mWetBuffer.getReadPointer(0);
+
+        for (auto i = 0; i < mWetBuffer.getNumSamples(); ++i)
+            spectrumProcessor.pushNextSampleIntoFifo(channelData[i]);
+    }
+}
+
+void SpectrumAudioProcessor::processFFT(float* tempFFTData)
+{
+    spectrumProcessor.doProcessing(tempFFTData);
+    spectrumProcessor.nextFFTBlockReady = false;
+}
+
+bool SpectrumAudioProcessor::getBypassedState()
+{
+    return isBypassed;
 }
 
 //==============================================================================
 // This creates new instances of the plugin..
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
-    return new TaroDelayAudioProcessor();
+    return new SpectrumAudioProcessor();
 }

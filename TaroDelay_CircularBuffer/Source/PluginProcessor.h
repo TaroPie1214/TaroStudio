@@ -58,12 +58,16 @@ public:
 
     using APVTS = juce::AudioProcessorValueTreeState;
     static APVTS::ParameterLayout createParameterLayout();
-
-    APVTS apvts{ *this, nullptr, "Parameters", createParameterLayout() };
-
+        
+    APVTS apvts {*this, nullptr, "Parameters", createParameterLayout() };
+    
 private:
-    juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear> myDelay{ 192000 };
-
+    void fillBuffer (juce::AudioBuffer<float>& buffer, int channel);
+    void readFromBuffer(juce::AudioBuffer<float>& buffer, juce::AudioBuffer<float>& delayBuffer, int channel);
+    void updateBufferPositions(juce::AudioBuffer<float>& buffer, juce::AudioBuffer<float>& delayBuffer);
+    juce::AudioBuffer<float> delayBuffer;
+    int writePosition { 0 };
+    
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TaroDelayAudioProcessor)
 };

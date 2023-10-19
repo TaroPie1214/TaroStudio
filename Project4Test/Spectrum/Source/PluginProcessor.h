@@ -9,19 +9,20 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "SpectrumProcessor.h"
 
 //==============================================================================
 /**
 */
-class TaroDelayAudioProcessor  : public juce::AudioProcessor
+class SpectrumAudioProcessor  : public juce::AudioProcessor
                             #if JucePlugin_Enable_ARA
                              , public juce::AudioProcessorARAExtension
                             #endif
 {
 public:
     //==============================================================================
-    TaroDelayAudioProcessor();
-    ~TaroDelayAudioProcessor() override;
+    SpectrumAudioProcessor();
+    ~SpectrumAudioProcessor() override;
 
     //==============================================================================
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
@@ -56,14 +57,29 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
-    using APVTS = juce::AudioProcessorValueTreeState;
-    static APVTS::ParameterLayout createParameterLayout();
+    // FFT
+    float* getFFTData();
+    int getNumBins();
+    int getFFTSize();
+    bool isFFTBlockReady();
+    void pushDataToFFT();
+    void processFFT(float* tempFFTData);
 
-    APVTS apvts{ *this, nullptr, "Parameters", createParameterLayout() };
+    // bypass
+    bool getBypassedState();
 
 private:
-    juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear> myDelay{ 192000 };
+    // Spectrum
+    SpectrumProcessor spectrumProcessor;
+
+    // dry audio buffer
+    juce::AudioBuffer<float> mDryBuffer;
+    // wet audio buffer
+    juce::AudioBuffer<float> mWetBuffer;
+
+    // bypass state
+    bool isBypassed = false;
 
     //==============================================================================
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TaroDelayAudioProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SpectrumAudioProcessor)
 };
