@@ -21,7 +21,7 @@ SpectrumAudioProcessorEditor::SpectrumAudioProcessorEditor (SpectrumAudioProcess
     addAndMakeVisible(spectrum);
 
     spectrum.setInterceptsMouseClicks(false, false);
-    spectrum.prepareToPaintSpectrum(audioProcessor.getNumBins(), audioProcessor.getFFTData(), processor.getSampleRate() / (float)audioProcessor.getFFTSize());
+    spectrum.prepareToPaintSpectrum(audioProcessor.spectrumProcessor.getNumBins(), audioProcessor.spectrumProcessor.getFFTData(), audioProcessor.getSampleRate() / (float)audioProcessor.spectrumProcessor.getFFTSize());
 }
 
 SpectrumAudioProcessorEditor::~SpectrumAudioProcessorEditor()
@@ -51,20 +51,18 @@ void SpectrumAudioProcessorEditor::timerCallback()
     {
         
     }
-    else if (audioProcessor.isFFTBlockReady())
+    else if (audioProcessor.spectrumProcessor.nextFFTBlockReady)
     {
-        // not bypassed, repaint at the same time
-        //(1<<11)
         // create a temp ddtData because sometimes pushNextSampleIntoFifo will replace the original
         // fftData after doingProcess and before painting.
         float tempFFTData[2 * 2048] = { 0 };
-        memmove(tempFFTData, audioProcessor.getFFTData(), sizeof(tempFFTData));
+        memmove(tempFFTData, audioProcessor.spectrumProcessor.getFFTData(), sizeof(tempFFTData));
         // doing process, fifo data to fft data
-        audioProcessor.processFFT(tempFFTData);
+        audioProcessor.spectrumProcessor.processFFT(tempFFTData);
         // prepare to paint the spectrum
-        spectrum.prepareToPaintSpectrum(audioProcessor.getNumBins(), tempFFTData, audioProcessor.getSampleRate() / (float)audioProcessor.getFFTSize());
+        spectrum.prepareToPaintSpectrum(audioProcessor.spectrumProcessor.getNumBins(), tempFFTData, audioProcessor.getSampleRate() / (float)audioProcessor.spectrumProcessor.getFFTSize());
 
         spectrum.repaint();
-        repaint();
+        //repaint();
     }
 }

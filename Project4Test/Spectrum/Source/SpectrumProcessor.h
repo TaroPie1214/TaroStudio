@@ -12,7 +12,7 @@ public:
     enum
     {
         fftOrder = 11,
-        fftSize = 1 << fftOrder, // 2048，频率分辨率为48kHz/2048 ≈ 23.44Hz
+        fftSize = 1 << fftOrder, // 2048，frequency resolution is 48kHz/2048 ≈ 23.44Hz
         numBins = fftSize / 2 // 1024
     };
 
@@ -38,8 +38,41 @@ public:
 
     void doProcessing (float* tempFFTData)
     {
+        // Add windows before processing to prevent spectrum leakage
         window.multiplyWithWindowingTable (tempFFTData, fftSize);
         forwardFFT.performFrequencyOnlyForwardTransform (tempFFTData);
+    }
+
+    float* getFFTData()
+    {
+        return fftData;
+    }
+
+    int getNumBins()
+    {
+        return numBins;
+    }
+
+    int getFFTSize()
+    {
+        return fftSize;
+    }
+
+    void pushDataToFFT(juce::AudioBuffer<float>& audioBuffer)
+    {
+        if (audioBuffer.getNumChannels() > 0)
+        {
+            auto* channelData = audioBuffer.getReadPointer(0);
+
+            for (auto i = 0; i < audioBuffer.getNumSamples(); ++i)
+                pushNextSampleIntoFifo(channelData[i]);
+        }
+    }
+
+    void processFFT(float* tempFFTData)
+    {
+        doProcessing(tempFFTData);
+        nextFFTBlockReady = false;
     }
 
 private:

@@ -144,7 +144,7 @@ void SpectrumAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
 
     // Spectrum
     mWetBuffer.makeCopyOf(buffer);
-    pushDataToFFT();
+    spectrumProcessor.pushDataToFFT(mWetBuffer);
 }
 
 //==============================================================================
@@ -170,43 +170,6 @@ void SpectrumAudioProcessor::setStateInformation (const void* data, int sizeInBy
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
-}
-
-float* SpectrumAudioProcessor::getFFTData()
-{
-    return spectrumProcessor.fftData;
-}
-
-int SpectrumAudioProcessor::getNumBins()
-{
-    return spectrumProcessor.numBins;
-}
-
-int SpectrumAudioProcessor::getFFTSize()
-{
-    return spectrumProcessor.fftSize;
-}
-
-bool SpectrumAudioProcessor::isFFTBlockReady()
-{
-    return spectrumProcessor.nextFFTBlockReady;
-}
-
-void SpectrumAudioProcessor::pushDataToFFT()
-{
-    if (mWetBuffer.getNumChannels() > 0)
-    {
-        auto* channelData = mWetBuffer.getReadPointer(0);
-
-        for (auto i = 0; i < mWetBuffer.getNumSamples(); ++i)
-            spectrumProcessor.pushNextSampleIntoFifo(channelData[i]);
-    }
-}
-
-void SpectrumAudioProcessor::processFFT(float* tempFFTData)
-{
-    spectrumProcessor.doProcessing(tempFFTData);
-    spectrumProcessor.nextFFTBlockReady = false;
 }
 
 bool SpectrumAudioProcessor::getBypassedState()

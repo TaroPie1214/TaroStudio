@@ -57,21 +57,13 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
-    // FFT
-    float* getFFTData();
-    int getNumBins();
-    int getFFTSize();
-    bool isFFTBlockReady();
-    void pushDataToFFT();
-    void processFFT(float* tempFFTData);
-
     // bypass
     bool getBypassedState();
 
-private:
     // Spectrum
     SpectrumProcessor spectrumProcessor;
 
+private:
     // dry audio buffer
     juce::AudioBuffer<float> mDryBuffer;
     // wet audio buffer
