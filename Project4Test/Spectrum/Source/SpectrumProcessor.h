@@ -12,7 +12,7 @@ public:
     enum
     {
         fftOrder = 11,
-        fftSize = 1 << fftOrder, // 2048£¬frequency resolution is 48kHz/2048 ¡Ö 23.44Hz
+        fftSize = 1 << fftOrder, // 2048Â£Â¬frequency resolution is 48kHz/2048 Â¡Ã– 23.44Hz
         numBins = fftSize / 2 // 1024
     };
 
