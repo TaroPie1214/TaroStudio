@@ -94,7 +94,7 @@ void TaroDelayAudioProcessor::changeProgramName (int index, const juce::String& 
 void TaroDelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     auto delayBufferSize = sampleRate * 2.0;
-    delayBuffer.setSize (getTotalNumOutputChannels(), (int)delayBufferSize);
+    delayBuffer.setSize (getTotalNumOutputChannels(), (int)delayBufferSize, false, true);
 }
 
 void TaroDelayAudioProcessor::releaseResources()
@@ -140,13 +140,12 @@ void TaroDelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
-        fillBuffer(buffer, channel);
+        //fillBuffer(buffer, channel);
         readFromBuffer(buffer, delayBuffer, channel);
         fillBuffer(buffer, channel);
     }
     
     updateBufferPositions(buffer, delayBuffer);
-    
 }
 
 void TaroDelayAudioProcessor::fillBuffer(juce::AudioBuffer<float>& buffer, int channel)
@@ -158,7 +157,7 @@ void TaroDelayAudioProcessor::fillBuffer(juce::AudioBuffer<float>& buffer, int c
     if (delayBufferSize > bufferSize + writePosition)
     {
         // 直接在当前的writePositon往后写入当前的buffer
-        delayBuffer.copyFrom(channel, writePosition, buffer.getWritePointer (channel), bufferSize);
+        delayBuffer.copyFrom(channel, writePosition, buffer.getReadPointer (channel), bufferSize);
     }
     // 如果不够的话
     else
@@ -170,7 +169,10 @@ void TaroDelayAudioProcessor::fillBuffer(juce::AudioBuffer<float>& buffer, int c
         // 再看看bufferSize减去刚刚填在最后的部分还剩下多少
         auto numSamplesAtStart = bufferSize - numSamplesToEnd;
         // 从circular buffer的头部覆盖写入剩下的内容
-        delayBuffer.copyFrom(channel, 0, buffer.getWritePointer (channel, numSamplesToEnd), numSamplesAtStart);
+        if (numSamplesAtStart != 0)
+        {
+            delayBuffer.copyFrom(channel, 0, buffer.getWritePointer(channel, numSamplesToEnd), numSamplesAtStart);
+        }
     }
 }
 
@@ -181,7 +183,7 @@ void TaroDelayAudioProcessor::readFromBuffer(juce::AudioBuffer<float>& buffer, j
     auto currentFeedBack = apvts.getRawParameterValue("FEEDBACK")->load();
     auto currentDelay = apvts.getRawParameterValue("DELAY")->load();
     
-    // 获取1秒前的audio
+    // 获取x秒前的audio
     auto readPosition = writePosition - currentDelay * getSampleRate();
     // 值得注意的是，当writePosition位于circular buffer的开头位置时，这里的readPositon可能为负数，但这是不允许出现的
     // 所以我们把它指向应该指向的位置，即circular buffer的尾部区域
