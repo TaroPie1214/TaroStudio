@@ -93,23 +93,16 @@ void TaroEQAudioProcessor::changeProgramName (int index, const juce::String& new
 //==============================================================================
 void TaroEQAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
-    
     juce::dsp::ProcessSpec spec;
-    
+
     spec.maximumBlockSize = samplesPerBlock;
-    
-    spec.numChannels = 1; //因为是Mono（单声道），所以只有一个channel
-    
+    spec.numChannels = 1;
     spec.sampleRate = sampleRate;
-    
+
     leftChain.prepare(spec);
     rightChain.prepare(spec);
-    
-    auto chainSettings = getChainSettings(apvts);
-    
-    auto peakCoefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate, chainSettings.peakFreq, chainSettings.peakQuality, juce::Decibels::decibelsToGain(chainSettings.peakGainInDecibels));
+
+    updateFilters();
 }
 
 void TaroEQAudioProcessor::releaseResources()
@@ -147,32 +140,24 @@ bool TaroEQAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) c
 void TaroEQAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels  = getTotalNumInputChannels();
+    auto totalNumInputChannels = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
+        buffer.clear(i, 0, buffer.getNumSamples());
 
-    juce::dsp::AudioBlock<float> block(buffer); //先把当前的这些buffer送到block中去
-    
+    updateFilters();
+
+    juce::dsp::AudioBlock<float> block(buffer);
+
     auto leftBlock = block.getSingleChannelBlock(0);
     auto rightBlock = block.getSingleChannelBlock(1);
-    //至此我们获得了每个独立的声道所代表的audio blocks
-    
+
     juce::dsp::ProcessContextReplacing<float> leftContext(leftBlock);
     juce::dsp::ProcessContextReplacing<float> rightContext(rightBlock);
-    //创建processing context（处理环境）来包裹声道中的每个独立的audio block
-    
+
     leftChain.process(leftContext);
     rightChain.process(rightContext);
-    
-    
 }
 
 //==============================================================================
@@ -206,56 +191,77 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts)
     ChainSettings settings;
     
     settings.lowCutFreq = apvts.getRawParameterValue("LowCut Freq")->load();
+    settings.lowCutQuality = apvts.getRawParameterValue("LowCut Quality")->load();
     settings.highCutFreq = apvts.getRawParameterValue("HighCut Freq")->load();
-    settings.peakFreq = apvts.getRawParameterValue("Peak Freq")->load();
-    settings.peakGainInDecibels = apvts.getRawParameterValue("Peak Gain")->load();
-    settings.peakQuality = apvts.getRawParameterValue("Quality")->load();
-    settings.lowCutSlope = apvts.getRawParameterValue("LowCut Slope")->load();
-    settings.highCutSlope = apvts.getRawParameterValue("HighCut Slope")->load();
+    settings.highCutQuality = apvts.getRawParameterValue("HighCut Quality")->load();
+
     return settings;
+}
+
+void TaroEQAudioProcessor::updateLowCutFilter(const ChainSettings& chainSettings)
+{
+    auto lowCutCoefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(getSampleRate(),
+        chainSettings.lowCutFreq,
+        chainSettings.lowCutQuality);
+
+    *leftChain.get<ChainPositions::LowCut>().coefficients = *lowCutCoefficients;
+    *rightChain.get<ChainPositions::LowCut>().coefficients = *lowCutCoefficients;
+}
+
+void TaroEQAudioProcessor::updateHighCutFilter(const ChainSettings& chainSettings)
+{
+    auto highCutCoefficients = juce::dsp::IIR::Coefficients<float>::makeLowPass(getSampleRate(),
+        chainSettings.highCutFreq,
+        chainSettings.highCutQuality);
+
+    *leftChain.get<ChainPositions::HighCut>().coefficients = *highCutCoefficients;
+    *rightChain.get<ChainPositions::HighCut>().coefficients = *highCutCoefficients;
+}
+
+void TaroEQAudioProcessor::updateFilters()
+{
+    auto chainSettings = getChainSettings(apvts);
+
+    updateLowCutFilter(chainSettings);
+    updateHighCutFilter(chainSettings);
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout TaroEQAudioProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
+
     layout.add(std::make_unique<juce::AudioParameterFloat>("LowCut Freq",
                                                            "LowCut Freq",
-                                                           juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 1.f),
-                                                           20.f));
-    
+                                                           juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 0.25f),
+                                                           20.f,
+                                                           juce::String(),
+                                                           juce::AudioProcessorParameter::genericParameter,
+                                                           [](float value, int) { return (value < 1000.0f) ?
+                                                           juce::String(value, 0) + " Hz" :
+                                                           juce::String(value / 1000.0f, 1) + " kHz"; },
+                                                           nullptr));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>("LowCut Quality",
+                                                           "LowCut Quality",
+                                                           juce::NormalisableRange<float>(0.1f, 10.f, 0.01f, 0.25f),
+                                                           0.71f));
+
     layout.add(std::make_unique<juce::AudioParameterFloat>("HighCut Freq",
                                                            "HighCut Freq",
-                                                           juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 1.f),
-                                                           20000.f));
-    
-    layout.add(std::make_unique<juce::AudioParameterFloat>("Peak Freq",
-                                                           "Peak Freq",
-                                                           juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 1.f),
-                                                           750.f));
-    
-    layout.add(std::make_unique<juce::AudioParameterFloat>("Peak Gain",
-                                                           "Peak Gain",
-                                                           juce::NormalisableRange<float>(-24.f, 24.f, 0.5f, 1.f),
-                                                           0.0f));
-    
-    layout.add(std::make_unique<juce::AudioParameterFloat>("Peak Quality",
-                                                           "Peak Quality",
-                                                           juce::NormalisableRange<float>(0.1f, 10.f, 0.05f, 1.f),
-                                                           1.f));
-    
-    juce::StringArray stringArray;
-    for( int i = 0; i < 4; ++i )
-    {
-        juce::String str;
-        str << (12 + i*12);
-        str << " db/Oct";
-        stringArray.add(str);
-    }
-    
-    layout.add(std::make_unique<juce::AudioParameterChoice>("LowCut Slope", "LowCut Slope", stringArray, 0));
-    
-    layout.add(std::make_unique<juce::AudioParameterChoice>("HighCut Slope", "HighCut Slope", stringArray, 0));
-    
+                                                           juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 0.25f),
+                                                           20000.f,
+                                                           juce::String(),
+                                                           juce::AudioProcessorParameter::genericParameter,
+                                                           [](float value, int) { return (value < 1000.0f) ?
+                                                           juce::String(value, 0) + " Hz" :
+                                                           juce::String(value / 1000.0f, 1) + " kHz"; },
+                                                           nullptr));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>("HighCut Quality",
+                                                           "HighCut Quality",
+                                                           juce::NormalisableRange<float>(0.1f, 10.f, 0.01f, 0.25f),
+                                                           0.71f));
+
     return layout;
 }
 
